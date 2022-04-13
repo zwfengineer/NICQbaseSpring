@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -84,7 +85,7 @@ public class UserDao implements UserDaoImpl{
     }
 
     @Override
-    public Object addUser(User user) {
+    public Object addUser(@NotNull User user) {
         String sql = "insert into user values(?,?,?,?,NOW(),?,?)";
         Object[] args = {
                 user.getUserName(),
@@ -147,8 +148,8 @@ public class UserDao implements UserDaoImpl{
         jdbctemplate.update(sql,fid,uid);
     }
 
-    public List<String> getFriends(String uid){
-        String sql="select fid from friends where uid=?";
-        return jdbctemplate.query(sql,new BeanPropertyRowMapper<>(String.class),uid);
+    public List<Map<String,Object>> getFriends(String uid){
+        String sql="select fid,user.username from friends,user where friends.uid=? and user.uid = friends.fid";
+        return jdbctemplate.queryForList(sql,uid);
     }
 }

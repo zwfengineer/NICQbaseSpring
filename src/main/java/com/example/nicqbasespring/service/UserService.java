@@ -1,17 +1,27 @@
 package com.example.nicqbasespring.service;
 
 import com.example.nicqbasespring.dao.UserDao;
+import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeCreator;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 
-@Component
+@Service
 public  class UserService {
     private UserDao userDao;
     private Logger log;
@@ -41,40 +51,40 @@ public  class UserService {
         String count =String.valueOf((Integer) userDao.getAllUserNum()+1);
         String uid = new SimpleDateFormat("yy-MM-dd").format(new Date()) +"-"+ count;
         user.setUID(uid);
-        user.setPermission("normal");
-        user.setAvatar("0");
         if ((Integer)userDao.addUser(user)==1){
             return user;
         }else{
             return "UNKNOW ERROR";
         }
     }
-    public Object addFriends(User user,String fid){
+    public Object addFriends(@NotNull User user, String fid){
         /*
                 请确保 user 真实有效
         */
         Object obj = userDao.checkUserNum(fid);
-        switch (obj.getClass().getSimpleName()){
-            case "Integer":
-                if (((Integer) obj) == 1){
-                    Object ckfObj =  userDao.checkFriend(user.getUID(),fid);
-                    if ("Integer".equals(ckfObj.getClass().getSimpleName())) {
-                        if ((Integer) ckfObj != 0) {
-                            return "OK:已经是好友了！";
+        if(! user.getUID().equals(fid)) {
+            switch (obj.getClass().getSimpleName()) {
+                case "Integer":
+                    if (((Integer) obj) == 1) {
+                        Object ckfObj = userDao.checkFriend(user.getUID(), fid);
+                        if ("Integer".equals(ckfObj.getClass().getSimpleName())) {
+                            if ((Integer) ckfObj != 0) {
+                                return "OK:已经是好友了！";
+                            } else {
+                                userDao.addFriend(user.getUID(), fid);
+                                return "OK:已经添加好友";
+                            }
                         } else {
-                            userDao.addFriend(user.getUID(), fid);
-                            return "OK:已经添加好友";
+                            return (String) ckfObj;
                         }
-                    }else {
-                        return (String)ckfObj;
+                    } else {
+                        return "ERR:没有这个用户！";
                     }
-                }else {
-                    return "ERR:没有这个用户！";
-                }
-            case "String":
-                return (String)obj;
+                case "String":
+                    return obj;
+            }
         }
-        return null;
+        return "ERR:积极是积极的朋友";
     }
     public Object removeFriend(@NotNull User user, String fid){
         if ((Integer)userDao.checkFriend(user.getUID(),fid)==1){
@@ -84,14 +94,20 @@ public  class UserService {
             return "ERR:没加好友";
         }
     }
-    public Object getFriends(@NotNull User user){
+    public Object getFriends(@NotNull User user)  {
         if ((Integer)userDao.checkUserNum(user.getUID())==1){
             if ((Integer)userDao.checkFriend(user.getUID())>0){
-                return  userDao.getFriends(user.getUID());
+                List<Map<String,Object>> datas =  userDao.getFriends(user.getUID());
+                ObjectMapper objectMapper = new ObjectMapper();
+                return objectMapper.valueToTree(datas);
             }else{
                 return "OK:0";
             }
         }
+        return null;
+    }
+    public Object senmessage(User user, Message message){
+
         return null;
     }
 }

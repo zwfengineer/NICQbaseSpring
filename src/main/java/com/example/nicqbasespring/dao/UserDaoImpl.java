@@ -2,8 +2,10 @@ package com.example.nicqbasespring.dao;
 
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserDaoImpl {
     public Object getUserName(String uid);
@@ -22,5 +24,5 @@ public interface UserDaoImpl {
     public Object checkFriend(String uid,String fid);
     public void addFriend(String uid,String fid);
     public void removeFriend(String uid,String fid);
-    public List<String> getFriends(String uid);
+    public List<Map<String,Object>> getFriends(String uid)throws JsonProcessingException;
 }

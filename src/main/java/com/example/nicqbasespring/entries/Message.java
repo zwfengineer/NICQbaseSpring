@@ -9,8 +9,7 @@ public class Message {
     private String from;
     private String to;
     private Object Message;
-    private String MessageType;
-    private static Map<String, List<Message>> HistoryMessage  = new ConcurrentHashMap<>();
+    private MessageType MessageType;
 
     public String getFrom() {
         return from;
@@ -36,25 +35,20 @@ public class Message {
         Message = message;
     }
 
-    public String getMessageType() {
+    public MessageType getMessageType() {
         return MessageType;
     }
 
-    public void setMessageType(String messageType) {
+    public void setMessageType(MessageType messageType) {
         MessageType = messageType;
     }
 
-    public void setHistoryMessage(String uid){
-        if(HistoryMessage.containsKey(uid)){
-            HistoryMessage.get(uid).add(this);
-        }else{
-            List<Message> messages = new ArrayList<>();
-            messages.add(this);
-            HistoryMessage.put(uid,messages);
-        }
-    }
-
-    public List<Message> getHistoryMessage(String uid){
-        return HistoryMessage.getOrDefault(uid, null);
-    }
+}
+enum MessageType{
+    Text,
+    FullText,
+    Video,
+    OnlineVideo,
+    Voice,
+    OnlineVioce,
 }

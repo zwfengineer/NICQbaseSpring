@@ -1,24 +1,39 @@
 package com.example.nicqbasespring.entries;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 @Component
 public class User {
     String UserName ;
     private String Passwd;
+    @JacksonInject("UserGender")
+    @Value("保密")
     private String Gender;
     String UID;
+    @JacksonInject("UserAvatar")
     @Value("0")
     String Avatar;
+    String Phonenum;
+
+    public String getPhonenum() {
+        return Phonenum;
+    }
+
+    @Autowired(required = false)
+    public void setPhonenum(String phonenum) {
+        Phonenum = phonenum;
+    }
+
     private List<Object> Friends;
     private List<Object> Messages;
 
     @Value("normal")
+    @JacksonInject("UserPermission")
     private String Permission;
 
     public String getGender() {
@@ -38,6 +53,7 @@ public class User {
     }
 
     @Autowired(required = false)
+    @Value("normal")
     public void setPermission(String permission) {
         Permission = permission;
     }
@@ -114,6 +130,7 @@ public class User {
         return Avatar;
     }
 
+    @Autowired(required = false)
     public void setAvatar(String Avatar) {
         this.Avatar = Avatar;
     }
