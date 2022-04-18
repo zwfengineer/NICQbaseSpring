@@ -20,16 +20,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-@ServerEndpoint(value = "/wsapi",configurator = NicqWebSocketConfig.class)
 @Component
+@ServerEndpoint(value = "/wsapi",configurator = NicqWebSocketConfig.class)
 public  class WebSocketConnect {
     private final Logger log = LoggerFactory.getLogger(WebSocketConnect.class);
-    @Autowired(required = false)
     private  UserService userService;
     private static final Map<String, WebSocketConnect> onLineUserList = new ConcurrentHashMap<>();
     private HttpSession httpSession;
     private Session session;
     private boolean valid;
+    @Autowired(required = false)
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
     @OnOpen
     public void onOpen(@NotNull Session session, EndpointConfig config) throws IOException {
         if (usercheck(session,config)){
@@ -51,13 +55,12 @@ public  class WebSocketConnect {
     @OnClose
     public void onClose(@NotNull Session session){
         if(this.valid) {
-            String username = (
+            User user =
                     (User) onLineUserList
                             .get(session.getId())
                             .httpSession
-                            .getAttribute("user")
-            ).getUserName();
-            log.info("user: " + username + " logout");
+                            .getAttribute("user");
+            log.info("user: " + user.getUserName() + " logout");
             onLineUserList.remove(session.getId());
         }else {
             log.info("evil user break off");

@@ -8,10 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.*;
@@ -75,7 +72,7 @@ public class ApiServlet {
     }
 
     @RequestMapping(value="/getfriendlist",method = RequestMethod.POST)
-    public String getfriendlist(@NotNull HttpSession httpSession) throws JsonProcessingException {
+    public String getfriendlist(@NotNull HttpSession httpSession) {
         List<String> list = UserUtil.asList(httpSession.getAttributeNames().asIterator());
         if (list.contains("Logined")&list.contains("user")){
             Object dataobject = userService.getFriends((User) httpSession.getAttribute("user"));
@@ -95,7 +92,7 @@ public class ApiServlet {
         log.info(httpSession.getId());
     }
 
-    @RequestMapping(value = "/黑",method = RequestMethod.GET)
+    @RequestMapping(value = "/test",method = RequestMethod.GET)
     public void test(HttpSession httpSession){
         log.info("httpsession"+httpSession.getId());
     }

@@ -1,31 +1,28 @@
 package com.example.nicqbasespring;
 
-import com.example.nicqbasespring.config.NicqBaseConfiguration;
+import com.example.nicqbasespring.config.*;
 import com.example.nicqbasespring.dao.UserDao;
 import com.example.nicqbasespring.entries.User;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import java.io.IOException;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class NicQbaseSpringApplicationTests {
-
     static ApplicationContext context;
     static UserService userService;
     static UserDao userDao;
-    @Test
-    void contextLoads() throws IOException, InterruptedException {
-       context =  new AnnotationConfigApplicationContext(NicqBaseConfiguration.class);
-       userService = context.getBean("userService",UserService.class);
-       userDao = context.getBean("userDao",UserDao.class);
-       test3 ();
-       test5();
+    @Test()
+    void contextLoads() {
+        context  = new AnnotationConfigApplicationContext(NicqBaseConfiguration.class);
+        userService = context.getBean("userService",UserService.class);
+        userDao = context.getBean("userDao",UserDao.class);
+        test1();
+        test2();
     }
     /*
         Object User Test!
@@ -65,9 +62,8 @@ class NicQbaseSpringApplicationTests {
                 )
         );
     }
-    public static void test5() throws JsonProcessingException {
+    public static void test5() {
         User user  = (User) userDao.getUser((String) userDao.getUid("Rider"));
         System.out.println(userService.getFriends(user));
     }
-
 }

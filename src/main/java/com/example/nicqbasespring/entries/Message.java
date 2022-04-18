@@ -1,10 +1,5 @@
 package com.example.nicqbasespring.entries;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class Message {
     private String from;
     private String to;
@@ -44,7 +39,7 @@ public class Message {
     }
 
 }
-enum MessageType{
+enum MessageType {
     Text,
     FullText,
     Video,

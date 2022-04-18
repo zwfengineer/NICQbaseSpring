@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -20,8 +19,7 @@ public class NicqWebConfiguration {
     @Bean
     public WebMvcConfigurer corsConfigure(){
 //  配置跨域请求，向localhost：1938开放跨域请求
-        return new WebMvcConfigurerAdapter() {
-            @Override
+        return new WebMvcConfigurer() {
             public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOriginPatterns("*")
@@ -48,8 +46,9 @@ public class NicqWebConfiguration {
         mappingJackson2HttpMessageConverter.setSupportedMediaTypes(list);
         return mappingJackson2HttpMessageConverter;
     }
+
     @Bean
-    public ServerEndpointExporter serverEndpointExporter(){
+    public ServerEndpointExporter  serverEndpointExporter(){
         return new ServerEndpointExporter();
     }
 

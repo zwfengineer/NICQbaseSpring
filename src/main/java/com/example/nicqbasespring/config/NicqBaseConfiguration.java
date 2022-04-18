@@ -1,18 +1,14 @@
 package com.example.nicqbasespring.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.example.nicqbasespring.controller.ApiServlet;
-import com.example.nicqbasespring.dao.UserDao;
-import com.example.nicqbasespring.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScans;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
 import javax.sql.DataSource;
 import java.util.logging.Logger;
@@ -21,7 +17,6 @@ import java.util.logging.Logger;
 @Configuration
 @ComponentScan(
         basePackages = {
-                "com.example.nicqbasespring.config",
                 "com.example.nicqbasespring.service",
                 "com.example.nicqbasespring.dao",
                 "com.example.nicqbasespring.controller",

@@ -75,7 +75,7 @@ public  class UserService {
                                 return "OK:已经添加好友";
                             }
                         } else {
-                            return (String) ckfObj;
+                            return ckfObj;
                         }
                     } else {
                         return "ERR:没有这个用户！";
@@ -106,7 +106,7 @@ public  class UserService {
         }
         return null;
     }
-    public Object senmessage(User user, Message message){
+    public Object sendmessage(User user, Message message){
 
         return null;
     }
