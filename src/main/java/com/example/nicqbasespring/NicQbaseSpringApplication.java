@@ -7,6 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class NicQbaseSpringApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(NicQbaseSpringApplication.class, args);
+       SpringApplication.run(NicQbaseSpringApplication.class, args);
     }
 }

@@ -24,7 +24,6 @@ public class User implements Serializable {
     String Avatar;
     String Phonenum;
     private List<Map<String,String>> Friends;
-    private List<Message> Messages;
     @Autowired(required = false)
     public void setPhonenum(String phonenum) {
         Phonenum = phonenum;

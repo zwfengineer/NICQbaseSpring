@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,15 +23,9 @@ import java.util.logging.Logger;
 
 
 @Service
+@Slf4j
 public  class UserService {
     private UserDao userDao;
-    private Logger log;
-
-    @Autowired(required = false)
-    public void setLog(Logger log) {
-        this.log = log;
-    }
-
     @Autowired(required = false)
     public void setUserDao(UserDao userDao) {
         this.userDao = userDao;
@@ -107,7 +102,6 @@ public  class UserService {
         return null;
     }
     public Object sendmessage(User user, Message message){
-
         return null;
     }
 }

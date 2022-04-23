@@ -1,37 +1,45 @@
 package com.example.nicqbasespring.controller;
 import com.example.nicqbasespring.config.NicqWebSocketConfig;
+import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
 import com.example.nicqbasespring.service.UserService;
+import com.example.nicqbasespring.util.UserUtil;
+import com.example.nicqbasespring.util.WebSocketCloseCode;
+import com.example.nicqbasespring.entries.MessageType;
+import com.example.nicqbasespring.util.WebSocketEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpSession;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@ServerEndpoint(value = "/wsapi",configurator = NicqWebSocketConfig.class)
+@ServerEndpoint(value = "/wsapi",configurator = NicqWebSocketConfig.class,encoders = WebSocketEncoder.class)
+@Slf4j
 public  class WebSocketConnect {
-    private final Logger log = LoggerFactory.getLogger(WebSocketConnect.class);
-    private  UserService userService;
     private static final Map<String, WebSocketConnect> onLineUserList = new ConcurrentHashMap<>();
     private HttpSession httpSession;
     private Session session;
     private boolean valid;
+    private static UserService userService;
     @Autowired(required = false)
     public void setUserService(UserService userService) {
-        this.userService = userService;
+        WebSocketConnect.userService = userService;
+    }
+    private static RedisTemplate redisTemplate;
+    @Autowired(required = false)
+    public void setRedisTemplate(RedisTemplate redisTemplate) {
+        WebSocketConnect.redisTemplate = redisTemplate;
     }
 
     @OnOpen
@@ -40,8 +48,9 @@ public  class WebSocketConnect {
             this.session = session;
             this.valid = true;
             this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-            onLineUserList.put(session.getId(),this);
             User user = (User) this.httpSession.getAttribute("user");
+            onLineUserList.put(session.getId(),this);
+            redisTemplate.opsForHash().put("onlineuser",user.getUID(),httpSession.getId());
             log.info("user:"+user.getUserName()+"Connect success"+"UserNums:"+onLineUserList.size());
         }
     }
@@ -52,30 +61,32 @@ public  class WebSocketConnect {
         JsonNode jsondata = objectMapper.valueToTree(message);
         log.info(message);
     }
+
     @OnClose
     public void onClose(@NotNull Session session){
         if(this.valid) {
-            User user =
-                    (User) onLineUserList
-                            .get(session.getId())
-                            .httpSession
-                            .getAttribute("user");
-            log.info("user: " + user.getUserName() + " logout");
-            onLineUserList.remove(session.getId());
+            try{
+                User user = (User) this.httpSession.getAttribute("user");
+                redisTemplate.opsForHash().delete("onlineuser",user.getUID());
+                log.info("user: " + user.getUserName() + " logout");
+            }catch (IllegalStateException illegalStateException){
+                log.info("user session lost websocket server close");
+            }
         }else {
             log.info("evil user break off");
         }
+        onLineUserList.remove(session.getId());
     }
+
     @OnError
     public void onError(Session session, @NotNull Throwable error){
         error.printStackTrace();
         log.info(onLineUserList.get(session.getId()).httpSession.getId());
     }
 
-
-    public Boolean checkrepeat(String sessionid){
+    public Boolean checkrepeat(String httpsessionid){
         for (WebSocketConnect wsc : onLineUserList.values()){
-            if(wsc.httpSession.getId().equals(sessionid)){
+            if(wsc.httpSession.getId().equals(httpsessionid)){
                 return true;
             }
         }
@@ -91,7 +102,7 @@ public  class WebSocketConnect {
         }
         if (checkrepeat(httpSession.getId())){
             log.info("user repeat Login");
-            session.close();
+            session.close(new CloseReason(WebSocketCloseCode.USER_REPEAT_CONNECT,"UserRepeatConnect"));
             return false;
         }
         if (httpSession.getAttribute("Logined") == null || (httpSession.getAttribute("user")==null)){
@@ -111,6 +122,16 @@ public  class WebSocketConnect {
         for(WebSocketConnect webSocketConnect:onLineUserList.values()){
             if (Objects.equals(webSocketConnect.httpSession.getId(), httpSession.getId())){
                 webSocketConnect.session.close();
+                webSocketConnect.valid = false;
+            }
+        }
+    }
+
+    public static void logout(HttpSession httpSession,CloseReason closeReason)throws IOException {
+        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
+            if (Objects.equals(webSocketConnect.httpSession.getId(), httpSession.getId())){
+                webSocketConnect.session.close(closeReason);
+                webSocketConnect.valid = false;
             }
         }
     }
@@ -127,9 +148,30 @@ public  class WebSocketConnect {
         }
     }
 
-    public void SendUser(String sessionid,Message message) throws EncodeException, IOException {
-        if (onLineUserList.containsKey(sessionid)){
-            onLineUserList.get(sessionid).session.getBasicRemote().sendObject(message);
+    public void SendUserMessage(String uid,Message message) throws EncodeException, IOException {
+        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
+            if(((User)webSocketConnect.httpSession.getAttribute("User")).getUID().equals(uid)){
+                webSocketConnect.session.getBasicRemote().sendObject(message);
+            }
         }
     }
+
+    public static int onlineusernum(){
+        return onLineUserList.size();
+    }
+
+    public static void KeepHeart() throws EncodeException, IOException {
+        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
+            webSocketConnect.session.getBasicRemote().sendObject(
+                    new Message(
+                            "System",
+                            UserUtil.getHttpSessionUser(webSocketConnect.httpSession).getUID(),
+                            new Date(),
+                            DataType.Text,
+                            MessageType.Heart
+                    )
+            );
+        }
+    }
+
 }

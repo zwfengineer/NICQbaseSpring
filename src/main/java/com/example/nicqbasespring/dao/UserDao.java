@@ -1,30 +1,25 @@
 package com.example.nicqbasespring.dao;
 
-import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 @Repository
+@Slf4j
 public class UserDao implements UserDaoImpl{
-    private Logger log;
     private JdbcTemplate jdbctemplate;
+    private RedisTemplate redisTemplate;
     @Autowired(required = false)
     public void setJdbctemplate(JdbcTemplate jdbctemplate) {
         this.jdbctemplate = jdbctemplate;
-    }
-
-    @Autowired(required = false)
-    public void setLog(Logger log) {
-        this.log = log;
     }
 
     @Override
@@ -67,10 +62,7 @@ public class UserDao implements UserDaoImpl{
         return null;
     }
 
-    @Override
-    public Object ConnectionUser(User user, String uid) {
-        return null;
-    }
+
 
     @Override
     public Object getUid(String username) {
@@ -106,11 +98,6 @@ public class UserDao implements UserDaoImpl{
     }
 
     @Override
-    public Object putHistoryMessage(String uid, Message message) {  
-        return null;
-    }
-
-    @Override
     public Object  getUser(String uid) {
         /*
         you must be check this uid is real
@@ -130,13 +117,13 @@ public class UserDao implements UserDaoImpl{
         jdbctemplate.update(sql,uid,fid);
         jdbctemplate.update(sql,fid,uid);
     }
-    public Object addFriend(Map<String,String> friends){
-        return null;
-    }
-    public Object  checkFriend(String uid,String fid){
+
+
+    public Object checkFriend(String uid,String fid){
         String sql = "select count(*) from friends where uid = ? and fid=?";
         return jdbctemplate.queryForObject(sql,Integer.class,uid,fid);
     }
+
     public Object checkFriend(String uid){
         String sql = "select count(*) from friends where uid = ?";
         return jdbctemplate.queryForObject(sql,Integer.class,uid);
@@ -151,5 +138,17 @@ public class UserDao implements UserDaoImpl{
     public List<Map<String,Object>> getFriends(String uid){
         String sql="select fid,user.username from friends,user where friends.uid=? and user.uid = friends.fid";
         return jdbctemplate.queryForList(sql,uid);
+    }
+
+    @Override
+    public List<Map<String, Object>> searchUser(String uid) {
+        String sql = "select uid,username from user where uid like ? or username like ?";
+        return jdbctemplate.queryForList(sql,uid);
+    }
+
+    @Override
+    public List<Map<String,Object>> searchUser(String uid, String gender) {
+        String sql = "select uid,username from user where uid like ? or username like ? and gender = ?";
+        return jdbctemplate.queryForList(sql,uid,gender);
     }
 }

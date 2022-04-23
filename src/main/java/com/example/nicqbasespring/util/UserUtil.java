@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpSession;
 import java.lang.module.Configuration;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,11 +21,14 @@ public class UserUtil {
         return false;
     }
     public static <T>List<T> asList(Iterator<T> iterator){
-        List<T> copy = new ArrayList<T>();
+        List<T> copy = new ArrayList<>();
         while(iterator.hasNext()){
             copy.add(iterator.next());
         }
         return copy;
+    }
+    public static User getHttpSessionUser(HttpSession httpSession){
+        return (User) httpSession.getAttribute("user");
     }
 }
 

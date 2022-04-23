@@ -1,15 +1,15 @@
 package com.example.nicqbasespring.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.web.socket.server.standard.ServerEndpointExporter;
-
 import javax.sql.DataSource;
 import java.util.logging.Logger;
 
@@ -23,12 +23,9 @@ import java.util.logging.Logger;
                 "com.example.nicqbasespring.entries"
         }
 )
+@Slf4j
 @EnableTransactionManagement
 public class NicqBaseConfiguration {
-        @Bean(name="Logger")
-        public Logger getLogger(){
-                return  Logger.getLogger(getClass().getName());
-        }
         @Bean(name="dataSource")
         public DruidDataSource getDataSource(){
                 DruidDataSource dataSource = new DruidDataSource();
@@ -38,6 +35,7 @@ public class NicqBaseConfiguration {
                 dataSource.setPassword("root");
                 return dataSource;
         }
+
         @Bean(name="nicqjdbcTemplate")
         @Autowired(required = false)
         public JdbcTemplate getJdbctemplate(DataSource dataSource){
@@ -45,6 +43,7 @@ public class NicqBaseConfiguration {
                 jdbcTemplate.setDataSource(dataSource);
                 return jdbcTemplate;
         }
+
         @Bean(name="nicqDataSourceTransactionManager")
         @Autowired(required = false)
         public DataSourceTransactionManager getDatasourceTransactionManager(DataSource datasource){

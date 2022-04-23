@@ -9,8 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,12 +44,6 @@ public class NicqWebConfiguration {
         mappingJackson2HttpMessageConverter.setSupportedMediaTypes(list);
         return mappingJackson2HttpMessageConverter;
     }
-
-    @Bean
-    public ServerEndpointExporter  serverEndpointExporter(){
-        return new ServerEndpointExporter();
-    }
-
 }
 
 
