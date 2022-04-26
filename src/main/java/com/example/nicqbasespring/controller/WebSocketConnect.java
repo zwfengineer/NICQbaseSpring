@@ -8,6 +8,7 @@ import com.example.nicqbasespring.util.UserUtil;
 import com.example.nicqbasespring.util.WebSocketCloseCode;
 import com.example.nicqbasespring.entries.MessageType;
 import com.example.nicqbasespring.util.WebSocketEncoder;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -44,22 +45,27 @@ public  class WebSocketConnect {
 
     @OnOpen
     public void onOpen(@NotNull Session session, EndpointConfig config) throws IOException {
-        if (usercheck(session,config)){
-            this.session = session;
-            this.valid = true;
-            this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-            User user = (User) this.httpSession.getAttribute("user");
-            onLineUserList.put(session.getId(),this);
-            redisTemplate.opsForHash().put("onlineuser",user.getUID(),httpSession.getId());
-            log.info("user:"+user.getUserName()+"Connect success"+"UserNums:"+onLineUserList.size());
+        if (true){
+
+        }else {
+            if (usercheck(session, config)) {
+                this.session = session;
+                this.valid = true;
+                this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+                User user = (User) this.httpSession.getAttribute("user");
+                onLineUserList.put(session.getId(), this);
+                redisTemplate.opsForHash().put("onlineuser", user.getUID(), httpSession.getId());
+                log.info("user:" + user.getUserName() + "Connect success" + "UserNums:" + onLineUserList.size());
+            }
         }
     }
 
     @OnMessage
-    public void onMessage(String message,Session session){
+    public void onMessage(String message,Session session) throws JsonProcessingException {
         ObjectMapper objectMapper  = new ObjectMapper();
-        JsonNode jsondata = objectMapper.valueToTree(message);
-        log.info(message);
+        JsonNode jsondata = objectMapper.readTree(message);
+        
+        log.info(jsondata.get("user").asText());
     }
 
     @OnClose

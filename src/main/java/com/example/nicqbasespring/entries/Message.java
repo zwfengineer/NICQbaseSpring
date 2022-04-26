@@ -12,4 +12,18 @@ public class Message {
     private Object data;
     private DataType dataType;
     private MessageType messageType;
+    private String messageid;
+
+    public Message(
+            String from,
+            String to,
+            Object data,
+            DataType dataType,
+            MessageType messageType) {
+        this.from = from;
+        this.to = to;
+        this.data = data;
+        this.dataType = dataType;
+        this.messageType = messageType;
+    }
 }

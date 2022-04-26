@@ -1,10 +1,14 @@
 package com.example.nicqbasespring;
 
+import clojure.lang.Obj;
 import com.example.nicqbasespring.config.*;
 import com.example.nicqbasespring.dao.UserDao;
 import com.example.nicqbasespring.entries.User;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
@@ -18,6 +22,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -30,11 +35,11 @@ class NicQbaseSpringApplicationTests {
     @Autowired
     UserDao userDao;
     @Autowired
-    RedisTemplate redisTemplate;
+    RedisTemplate<String,Object> redisTemplate;
 
     @Test()
-    void contextLoads() {
-        test6();
+    void contextLoads() throws JsonProcessingException {
+        test7();
     }
     /*
         Object User Test!
@@ -92,7 +97,13 @@ class NicQbaseSpringApplicationTests {
 
     }
 
-    public void test7(){
-        userDao.searchUser("M");
+    public void test7() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonstring = "{\"userName\":\"Rider\"}";
+        JsonNode json = objectMapper.readTree(jsonstring);
+        List<Map<String, Object>> data = userDao.searchUser(json.get("userName").asText());
+        JsonNode jsondata = objectMapper.valueToTree(data);
+        System.out.println(jsondata.toString());
+        System.out.println(data.size());
     }
 }

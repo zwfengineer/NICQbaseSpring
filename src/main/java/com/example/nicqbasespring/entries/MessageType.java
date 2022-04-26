@@ -4,4 +4,5 @@ public enum MessageType {
     Heart,
     UserMessage,
     SystemMessage,
+    AddFriendRequest,
 }

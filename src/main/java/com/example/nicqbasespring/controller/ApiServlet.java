@@ -31,9 +31,9 @@ public class ApiServlet {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String,Object> redisTemplate;
     @Autowired(required = false)
-    public void setRedisTemplate(RedisTemplate redisTemplate) {
+    public void setRedisTemplate(RedisTemplate<String,Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -57,7 +57,6 @@ public class ApiServlet {
     @RequestMapping(value="/login",method = RequestMethod.POST)
     public String Login(@RequestBody @NotNull User user, @NotNull HttpSession httpSession){
         log.info(user.getUserName()+user.getPasswd());
-        log.info(String.valueOf(httpSession.getMaxInactiveInterval()));
 //        WebSocketConnect.logout(httpSession);
         Object logindata = userService.LoginServer(user);
         if(logindata.getClass().getSimpleName().equals("User"))
@@ -123,20 +122,33 @@ public class ApiServlet {
     }
 
     @RequestMapping(value = "/searchuser",method = RequestMethod.POST)
-    public String  searchuser(@RequestBody String data,HttpSession httpSession){
-//        if(redisTemplate.opsForHash().values("onlineuser").contains(httpSession.getId()))
-//        {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            JsonNode jsondata = objectMapper.valueToTree(data);
-//            log.info(jsondata.toString());
-//            return "Unkow";
-//        }else
-//        {
-//            return "user invalid";
-//        }
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsondata = objectMapper.valueToTree(data);
-        log.info(jsondata.toString());
-        return "Unkow";
+    public String  searchuser(@RequestBody ObjectNode searchData,HttpSession httpSession){
+        if (redisTemplate.opsForHash().values("onlineuser").contains(httpSession.getId())) {
+            if (searchData.get("userName").asText().length() <=0) {
+                searchData.put("userName", "^");
+            }
+            Object data = userService.searchUser(searchData.get("userName").asText());
+            if (data.getClass().getSimpleName().equals("String")) {
+                return (String) data;
+            } else {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsondata = objectMapper.valueToTree(data);
+                return jsondata.toString();
+            }
+        } else {
+            return "user invalid";
+        }
+
+    }
+
+    @RequestMapping(value = "/addFriend",method = RequestMethod.POST)
+    public String addFriend(@RequestBody String uid,HttpSession httpSession){
+        if (redisTemplate.opsForHash().values("onlineuser").contains(httpSession.getId())){
+            User user = (User) httpSession.getAttribute("User");
+            if (uid.length() !=0){
+                return (String) userService.addFriends(user,uid);
+            }
+        }
+        return "User invalid";
     }
 }

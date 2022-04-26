@@ -101,6 +101,13 @@ public  class UserService {
         }
         return null;
     }
+    public Object searchUser(@NotNull String useridname){
+        List<Map<String,Object>> data =  userDao.searchUser(useridname);
+        if (data.size()<1){
+            return "null";
+        }
+        return data;
+    }
     public Object sendmessage(User user, Message message){
         return null;
     }

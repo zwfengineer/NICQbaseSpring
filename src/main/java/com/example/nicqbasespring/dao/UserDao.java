@@ -14,18 +14,20 @@ import java.util.Map;
 
 @Repository
 @Slf4j
-public class UserDao implements UserDaoImpl{
-    private JdbcTemplate jdbctemplate;
-    private RedisTemplate redisTemplate;
-    @Autowired(required = false)
-    public void setJdbctemplate(JdbcTemplate jdbctemplate) {
-        this.jdbctemplate = jdbctemplate;
-    }
+public class UserDao extends AbstraDao implements UserDaoImpl{
 
+    @Autowired(required = false)
+    public void setJdbctemplate(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+    @Autowired(required = false)
+    public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
     @Override
     public Object getUserName(String uid) {
         String sql = "select username from user where uid=?";
-        return jdbctemplate.queryForObject(sql,String.class,uid);
+        return jdbcTemplate.queryForObject(sql,String.class,uid);
     }
 
     @Override
@@ -33,18 +35,18 @@ public class UserDao implements UserDaoImpl{
         String sql = "select count(*) from user where uid=? and passwd=? ";
         String uid = user.getUID();
         String passwd = user.getPasswd();
-        return jdbctemplate.queryForObject(sql,Integer.class, uid,passwd);
+        return jdbcTemplate.queryForObject(sql,Integer.class, uid,passwd);
     }
     @Override
     public Object checkUserNum(@NotNull String uid){
         String sql = "select count(*) from user where uid=?";
-        return jdbctemplate.queryForObject(sql,Integer.class, uid);
+        return jdbcTemplate.queryForObject(sql,Integer.class, uid);
     }
 
     @Override
     public Object getAllUserNum() {
         String sql = "select count(*) from user";
-        return jdbctemplate.queryForObject(sql,Integer.class);
+        return jdbcTemplate.queryForObject(sql,Integer.class);
     }
 
     @Override
@@ -68,7 +70,7 @@ public class UserDao implements UserDaoImpl{
     public Object getUid(String username) {
         String sql="select uid from user where username = ?";
         try{
-            return jdbctemplate.queryForObject(sql,String.class,username);
+            return jdbcTemplate.queryForObject(sql,String.class,username);
         }catch (Exception e){
             log.info(String.valueOf(e.getClass()));
             return "查无此人！！！！";
@@ -88,13 +90,13 @@ public class UserDao implements UserDaoImpl{
                 user.getAvatar(),
         };
         log.info(user.toString());
-        return jdbctemplate.update(sql,args);
+        return jdbcTemplate.update(sql,args);
     }
 
     @Override
     public Object getUserNum(String username) {
         String sql = "select count(*) from user where username = ?";
-        return jdbctemplate.queryForObject(sql,Integer.class,username);
+        return jdbcTemplate.queryForObject(sql,Integer.class,username);
     }
 
     @Override
@@ -104,7 +106,7 @@ public class UserDao implements UserDaoImpl{
          */
         if ((Integer) checkUserNum(uid)==1){
             String sql = "select * from user where uid=?";
-            return  jdbctemplate.queryForObject(sql,new BeanPropertyRowMapper<>(User.class),uid);
+            return  jdbcTemplate.queryForObject(sql,new BeanPropertyRowMapper<>(User.class),uid);
         }else {
             return "ERR:No User";
         }
@@ -114,41 +116,42 @@ public class UserDao implements UserDaoImpl{
     @Override
     public void addFriend(String uid,String fid) {
         String sql = "insert into friends values(?,?,NOW())";
-        jdbctemplate.update(sql,uid,fid);
-        jdbctemplate.update(sql,fid,uid);
+        jdbcTemplate.update(sql,uid,fid);
+        jdbcTemplate.update(sql,fid,uid);
     }
 
 
     public Object checkFriend(String uid,String fid){
         String sql = "select count(*) from friends where uid = ? and fid=?";
-        return jdbctemplate.queryForObject(sql,Integer.class,uid,fid);
+        return jdbcTemplate.queryForObject(sql,Integer.class,uid,fid);
     }
 
     public Object checkFriend(String uid){
         String sql = "select count(*) from friends where uid = ?";
-        return jdbctemplate.queryForObject(sql,Integer.class,uid);
+        return jdbcTemplate.queryForObject(sql,Integer.class,uid);
     }
 
     public void removeFriend(String uid,String fid){
         String sql = "DELETE FROM friends where uid=? and fid=?";
-        jdbctemplate.update(sql,uid,fid);
-        jdbctemplate.update(sql,fid,uid);
+        jdbcTemplate.update(sql,uid,fid);
+        jdbcTemplate.update(sql,fid,uid);
     }
 
     public List<Map<String,Object>> getFriends(String uid){
         String sql="select fid,user.username from friends,user where friends.uid=? and user.uid = friends.fid";
-        return jdbctemplate.queryForList(sql,uid);
+        return jdbcTemplate.queryForList(sql,uid);
     }
 
     @Override
-    public List<Map<String, Object>> searchUser(String uid) {
-        String sql = "select uid,username from user where uid like ? or username like ?";
-        return jdbctemplate.queryForList(sql,uid);
+    public List<Map<String, Object>> searchUser(String username) {
+        String sql = "select uid,username,gender from user where uid regexp ? or username regexp ?";
+        log.info(username);
+        return jdbcTemplate.queryForList(sql,username,username);
     }
 
     @Override
     public List<Map<String,Object>> searchUser(String uid, String gender) {
         String sql = "select uid,username from user where uid like ? or username like ? and gender = ?";
-        return jdbctemplate.queryForList(sql,uid,gender);
+        return jdbcTemplate.queryForList(sql,uid,gender);
     }
 }
