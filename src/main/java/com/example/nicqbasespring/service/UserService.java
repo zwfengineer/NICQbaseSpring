@@ -1,5 +1,6 @@
 package com.example.nicqbasespring.service;
 
+import com.example.nicqbasespring.dao.MessageDao;
 import com.example.nicqbasespring.dao.UserDao;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
@@ -24,18 +25,13 @@ import java.util.logging.Logger;
 
 @Service
 @Slf4j
-public  class UserService {
-    private UserDao userDao;
-    @Autowired(required = false)
-    public void setUserDao(UserDao userDao) {
-        this.userDao = userDao;
-    }
+public  class UserService extends AbstraService {
     public Object LoginServer(@NotNull User user){
         user.setUID(String.valueOf( userDao.getUid(user.getUserName())));
         Integer num = (Integer) userDao.checkUserNum(user);
         log.info(num.toString());
         if(num==1) {
-            return this.userDao.getUser(user.getUID());
+            return userDao.getUser(user.getUID());
         }
         else {
             return "用户名或密码错误，请重新输入";
@@ -107,8 +103,5 @@ public  class UserService {
             return "null";
         }
         return data;
-    }
-    public Object sendmessage(User user, Message message){
-        return null;
     }
 }

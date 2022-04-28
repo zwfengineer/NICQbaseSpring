@@ -1,6 +1,7 @@
 package com.example.nicqbasespring.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -50,5 +51,10 @@ public class NicqBaseConfiguration {
                 DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
                 dataSourceTransactionManager.setDataSource(datasource);
                 return dataSourceTransactionManager;
+        }
+
+        @Bean
+        public ObjectMapper getObjectMapper(){
+                return new ObjectMapper();
         }
 }

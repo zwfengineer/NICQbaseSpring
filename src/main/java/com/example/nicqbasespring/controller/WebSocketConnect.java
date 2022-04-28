@@ -1,15 +1,16 @@
 package com.example.nicqbasespring.controller;
+import clojure.lang.Obj;
 import com.example.nicqbasespring.config.NicqWebSocketConfig;
 import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
+import com.example.nicqbasespring.service.PostSerivce;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
 import com.example.nicqbasespring.util.WebSocketCloseCode;
 import com.example.nicqbasespring.entries.MessageType;
 import com.example.nicqbasespring.util.WebSocketEncoder;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -32,40 +33,48 @@ public  class WebSocketConnect {
     private HttpSession httpSession;
     private Session session;
     private boolean valid;
+
+    private static PostSerivce postSerivce;
+    @Autowired
+    public  void setPostSerivce(PostSerivce postSerivce) {
+        WebSocketConnect.postSerivce = postSerivce;
+    }
+
     private static UserService userService;
     @Autowired(required = false)
     public void setUserService(UserService userService) {
         WebSocketConnect.userService = userService;
     }
-    private static RedisTemplate redisTemplate;
+    private static RedisTemplate<String, Object> redisTemplate;
     @Autowired(required = false)
-    public void setRedisTemplate(RedisTemplate redisTemplate) {
+    public void setRedisTemplate(RedisTemplate<String, Object>  redisTemplate) {
         WebSocketConnect.redisTemplate = redisTemplate;
+    }
+    public static ObjectMapper objectMapper;
+    @Autowired(required = false)
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        WebSocketConnect.objectMapper = objectMapper;
     }
 
     @OnOpen
     public void onOpen(@NotNull Session session, EndpointConfig config) throws IOException {
-        if (true){
-
-        }else {
-            if (usercheck(session, config)) {
-                this.session = session;
-                this.valid = true;
-                this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-                User user = (User) this.httpSession.getAttribute("user");
-                onLineUserList.put(session.getId(), this);
-                redisTemplate.opsForHash().put("onlineuser", user.getUID(), httpSession.getId());
-                log.info("user:" + user.getUserName() + "Connect success" + "UserNums:" + onLineUserList.size());
-            }
+        if (usercheck(session, config)) {
+            this.session = session;
+            this.valid = true;
+            this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+            User user = (User) this.httpSession.getAttribute("user");
+            onLineUserList.put(session.getId(), this);
+            redisTemplate.opsForHash().put("onlineuser", user.getUID(), httpSession.getId());
+            log.info("user:" + user.getUserName() + "Connect success" + "UserNums:" + onLineUserList.size());
         }
     }
 
     @OnMessage
-    public void onMessage(String message,Session session) throws JsonProcessingException {
+    public void onMessage(String messagetext,Session session) throws IOException, EncodeException {
         ObjectMapper objectMapper  = new ObjectMapper();
-        JsonNode jsondata = objectMapper.readTree(message);
-        
-        log.info(jsondata.get("user").asText());
+        Message message = objectMapper.readValue(messagetext,Message.class);
+        System.out.println(message.toString());
+        postSerivce.Post(message,session);
     }
 
     @OnClose
@@ -85,7 +94,7 @@ public  class WebSocketConnect {
     }
 
     @OnError
-    public void onError(Session session, @NotNull Throwable error){
+    public void onError(@NotNull Session session, @NotNull Throwable error){
         error.printStackTrace();
         log.info(onLineUserList.get(session.getId()).httpSession.getId());
     }
@@ -99,11 +108,12 @@ public  class WebSocketConnect {
         return false;
     }
 
-    public boolean usercheck(Session session,EndpointConfig config) throws IOException {
+    public boolean usercheck(Session session, @NotNull EndpointConfig config) throws IOException {
         HttpSession httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
         if (httpSession == null){
             log.info("Unknow Error");
-            session.close();
+//            session.close();
+//            Websocket Message Model Test
             return false;
         }
         if (checkrepeat(httpSession.getId())){
@@ -143,7 +153,7 @@ public  class WebSocketConnect {
     }
 
     //广播
-    public void BorderCastUserList(Message message, @NotNull List<String> userList)throws EncodeException, IOException{
+    public static void BorderCastUserList(Message message, @NotNull List<String> userList)throws EncodeException, IOException{
         for (String user:userList) {
             if (onLineUserList.containsKey(user)) {
                 onLineUserList.get(user)
@@ -154,7 +164,7 @@ public  class WebSocketConnect {
         }
     }
 
-    public void SendUserMessage(String uid,Message message) throws EncodeException, IOException {
+    public static void SendUserMessage(String uid,Message message) throws EncodeException, IOException {
         for(WebSocketConnect webSocketConnect:onLineUserList.values()){
             if(((User)webSocketConnect.httpSession.getAttribute("User")).getUID().equals(uid)){
                 webSocketConnect.session.getBasicRemote().sendObject(message);
