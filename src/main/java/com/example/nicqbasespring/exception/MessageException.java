@@ -6,4 +6,9 @@ public class MessageException extends RuntimeException{
     public MessageException(MessageErrorType messageErrorType){
         this.messageErrorType = messageErrorType;
     }
+
+    @Override
+    public String toString() {
+        return this.messageErrorType.toString();
+    }
 }

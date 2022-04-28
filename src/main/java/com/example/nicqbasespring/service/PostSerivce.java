@@ -37,12 +37,12 @@ public class PostSerivce extends AbstraService{
              try {
                  messageDao.addFriendRequest(message);
                  message.setData(objectNode);
-                 session.getBasicRemote().sendObject(message);
              }catch (MessageException messageException){
                  objectNode.put("posted","false");
                  objectNode.put("message", String.valueOf(messageException));
                  message.setData(objectNode);
              }
+             session.getBasicRemote().sendObject(message);
         }
     }
 

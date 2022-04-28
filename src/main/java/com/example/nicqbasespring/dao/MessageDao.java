@@ -14,15 +14,10 @@ public class MessageDao extends AbstraDao implements MessageDaoImpl{
     public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
-    public Boolean addFriendRequest(Message message){
-        if(Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(message.getTo() + "AddFriendRequestList", message))){
-            try {
+    public void addFriendRequest(Message message){
+        if((Boolean.FALSE.equals(redisTemplate.opsForSet().isMember(message.getTo() + "AddFriendRequestList", message)))){
                 redisTemplate
                         .opsForSet().add(message.getTo() + "AddFriendRequestList", message);
-            }catch (Exception e){
-                return false;
-            }
-            return true;
         }else{
             throw new MessageException(MessageErrorType.Repeat_Post);
         }
