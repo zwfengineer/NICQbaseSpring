@@ -4,4 +4,5 @@ public enum  MessageErrorType{
     Repeat_Post,
     Poster_Blacklist,
     Recevicer_Blacklist,
+    User_Invilid,
 }

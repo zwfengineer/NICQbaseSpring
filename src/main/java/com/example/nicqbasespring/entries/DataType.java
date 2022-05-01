@@ -1,12 +1,21 @@
 package com.example.nicqbasespring.entries;
 
 public enum DataType {
-    Text,
-    FullText,
-    Video,
-    OnlineVideo,
-    Voice,
-    OnlineVioce
+    Text("Text"),
+    FullText("FullText"),
+    Video("Video"),
+    OnlineVideo("OnlineVideo"),
+    Voice("Voice"),
+    OnlineVioce("OnlineVoice");
+    private final String desc;
+    DataType(String desc){
+        this.desc = desc;
+    }
+
+    @Override
+    public String toString() {
+        return this.desc;
+    }
 }
 
 

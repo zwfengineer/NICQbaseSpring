@@ -1,20 +1,37 @@
 package com.example.nicqbasespring.service;
 
+import com.example.nicqbasespring.controller.WebSocketConnect;
+import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
+import com.example.nicqbasespring.entries.MessageType;
+import com.example.nicqbasespring.exception.MessageErrorType;
 import com.example.nicqbasespring.exception.MessageException;
+import com.example.nicqbasespring.util.UserUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.websocket.EncodeException;
 import javax.websocket.Session;
 import java.io.IOException;
+import java.sql.Timestamp;
 
 @Component
 @Slf4j
 public class PostSerivce extends AbstraService{
+    private HistoryMessageService historyMessageService;
 
+    @Autowired(required = false)
+    public void setHistoryMessageService(HistoryMessageService historyMessageService) {
+        this.historyMessageService = historyMessageService;
+    }
+
+    @Transactional
     public  void Post(@NotNull Message message, Session session) throws EncodeException, IOException {
         switch (message.getMessageType()){
             case UserMessage:
@@ -25,14 +42,36 @@ public class PostSerivce extends AbstraService{
                 PostAddFriendRequest(message,session);
         }
     }
+
     private  void PostSystem(Message message,Session session){
 
     }
-    private  void PostUser(Message message,Session session){
+
+    private  void PostUser(@NotNull Message message, Session session) throws EncodeException, IOException {
+        try{
+            PostUserCheck(message.getFrom(),message.getTo());
+            if (userDao.isOnline(message.getTo())){
+                WebSocketConnect connect = WebSocketConnect.getConnectbyUserid(message.getTo());
+                connect.session.getBasicRemote().sendObject(message);
+            }
+            historyMessageService.save(message);
+
+        }catch (MessageException messageException){
+            WebSocketConnect connect = WebSocketConnect.getConnectbySessionid(session.getId());
+            connect.session.getBasicRemote().sendObject(new Message(
+                    "System",
+                    UserUtil.getHttpSessionUser(connect.httpSession).getUID(),
+                    DataType.Text,
+                    new Timestamp(System.currentTimeMillis()),
+                    MessageType.DeliverFeedback
+            ));
+        }
 
     }
+
+
     private  void PostAddFriendRequest(@NotNull Message message, Session session) throws EncodeException, IOException {
-         if(Postcheck(message.getFrom(),message.getTo())){
+         if(PostAddFriendRequestCheck(message.getFrom(),message.getTo())){
              ObjectNode objectNode = (ObjectNode) objectMapper.readTree("{\"posted\":\"true\"}");
              try {
                  messageDao.addFriendRequest(message);
@@ -46,14 +85,26 @@ public class PostSerivce extends AbstraService{
         }
     }
 
-//     Test！！！！
-    public Boolean Postcheck(String uid,String fid){
-        if((Integer)userDao.checkUserNum((String) userDao.getUid(uid))!=1){
+    public Boolean PostAddFriendRequestCheck(String uid,String fid){
+        return userExistCheck(uid,fid);
+//
+//        check black list!
+//
+    }
+
+    public void PostUserCheck(String uid,String fid){
+        if(! userExistCheck(uid,fid)){
+            throw new MessageException(MessageErrorType.User_Invilid);
+        }
+    }
+
+    public Boolean userExistCheck(String uid,String fid){
+        if((Integer)userDao.checkUserNum(uid)!=1){
             return false;
         }
-        if ((Integer)userDao.checkUserNum((String) userDao.getUid(fid))!=1){
+        if ((Integer)userDao.checkUserNum(fid)!=1){
             return false;
         }
-        return true;
+        return false;
     }
 }

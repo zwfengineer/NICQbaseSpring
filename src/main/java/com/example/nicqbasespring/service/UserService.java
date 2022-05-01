@@ -43,6 +43,8 @@ public  class UserService extends AbstraService {
         String uid = new SimpleDateFormat("yy-MM-dd").format(new Date()) +"-"+ count;
         user.setUID(uid);
         if ((Integer)userDao.addUser(user)==1){
+            userDao.createoutbox(user.getUID());
+            userDao.createinbox(user.getUID());
             return user;
         }else{
             return "UNKNOW ERROR";

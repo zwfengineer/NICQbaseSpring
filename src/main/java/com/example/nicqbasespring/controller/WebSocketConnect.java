@@ -4,6 +4,10 @@ import com.example.nicqbasespring.config.NicqWebSocketConfig;
 import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
+import com.example.nicqbasespring.exception.MessageErrorType;
+import com.example.nicqbasespring.exception.MessageException;
+import com.example.nicqbasespring.exception.WebsocketException;
+import com.example.nicqbasespring.exception.WebsocketExceptionType;
 import com.example.nicqbasespring.service.PostSerivce;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
@@ -14,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -22,6 +27,7 @@ import javax.servlet.http.HttpSession;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,10 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @ServerEndpoint(value = "/wsapi",configurator = NicqWebSocketConfig.class,encoders = WebSocketEncoder.class)
 @Slf4j
 public  class WebSocketConnect {
-    private static final Map<String, WebSocketConnect> onLineUserList = new ConcurrentHashMap<>();
-    private HttpSession httpSession;
-    private Session session;
+    public HttpSession httpSession;
+    public Session session;
     private boolean valid;
+
+    private static final Map<String, WebSocketConnect> onLineUserList = new ConcurrentHashMap<>();
 
     private static PostSerivce postSerivce;
     @Autowired
@@ -71,7 +78,6 @@ public  class WebSocketConnect {
 
     @OnMessage
     public void onMessage(String messagetext,Session session) throws IOException, EncodeException {
-        ObjectMapper objectMapper  = new ObjectMapper();
         Message message = objectMapper.readValue(messagetext,Message.class);
         System.out.println(message.toString());
         postSerivce.Post(message,session);
@@ -152,26 +158,6 @@ public  class WebSocketConnect {
         }
     }
 
-    //广播
-    public static void BorderCastUserList(Message message, @NotNull List<String> userList)throws EncodeException, IOException{
-        for (String user:userList) {
-            if (onLineUserList.containsKey(user)) {
-                onLineUserList.get(user)
-                        .session
-                        .getBasicRemote()
-                        .sendObject(message);
-            }
-        }
-    }
-
-    public static void SendUserMessage(String uid,Message message) throws EncodeException, IOException {
-        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
-            if(((User)webSocketConnect.httpSession.getAttribute("User")).getUID().equals(uid)){
-                webSocketConnect.session.getBasicRemote().sendObject(message);
-            }
-        }
-    }
-
     public static int onlineusernum(){
         return onLineUserList.size();
     }
@@ -182,12 +168,38 @@ public  class WebSocketConnect {
                     new Message(
                             "System",
                             UserUtil.getHttpSessionUser(webSocketConnect.httpSession).getUID(),
-                            new Date(),
                             DataType.Text,
+                            new Timestamp(System.currentTimeMillis()),
                             MessageType.Heart
                     )
             );
         }
     }
 
+    public static  WebSocketConnect getConnectbySessionid(String id){
+        WebSocketConnect webSocketConnect = onLineUserList.get(id);
+        if( webSocketConnect != null){
+            return webSocketConnect;
+        }else {
+            throw new WebsocketException(WebsocketExceptionType.Online_User_Lost);
+        }
+    }
+
+    public static  WebSocketConnect getConnectbyHttpsessionid(String id){
+        for (WebSocketConnect webSocketConnect:onLineUserList.values()) {
+            if (webSocketConnect.httpSession.getId().equals(id)){
+                return webSocketConnect;
+            }
+        }
+        throw new WebsocketException(WebsocketExceptionType.Online_User_Lost);
+    }
+
+    public static WebSocketConnect getConnectbyUserid(String id){
+        for (WebSocketConnect webSocketConnect:onLineUserList.values()) {
+            if (UserUtil.getHttpSessionUser(webSocketConnect.httpSession).getUID().equals(id)){
+                return webSocketConnect;
+            }
+        }
+        throw new WebsocketException(WebsocketExceptionType.Online_User_Lost);
+    }
 }

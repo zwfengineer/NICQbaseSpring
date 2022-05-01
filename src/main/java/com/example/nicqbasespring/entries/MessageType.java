@@ -1,10 +1,20 @@
 package com.example.nicqbasespring.entries;
 
 public enum MessageType {
-    Heart,
-    UserMessage,
-    SystemMessage,
-    AddFriendRequest
+    Heart("Heart"),
+    UserMessage("UserMessage"),
+    SystemMessage("SystemMessage"),
+    AddFriendRequest("AddFriendRequest"),
+    DeliverFeedback("DeliverFeedback");
+    private String desc;
+    MessageType(String desc){
+        this.desc=desc;
+    }
+
+    @Override
+    public String toString() {
+        return this.desc;
+    }
 }
 
 

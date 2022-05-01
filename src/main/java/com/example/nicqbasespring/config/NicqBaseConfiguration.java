@@ -8,9 +8,12 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.sql.DataSource;
 import java.util.logging.Logger;
 
@@ -25,6 +28,7 @@ import java.util.logging.Logger;
         }
 )
 @Slf4j
+@EnableAspectJAutoProxy (proxyTargetClass = true)
 @EnableTransactionManagement
 public class NicqBaseConfiguration {
         @Bean(name="dataSource")
@@ -45,7 +49,7 @@ public class NicqBaseConfiguration {
                 return jdbcTemplate;
         }
 
-        @Bean(name="nicqDataSourceTransactionManager")
+        @Bean(name="DataSourceTransactionManager")
         @Autowired(required = false)
         public DataSourceTransactionManager getDatasourceTransactionManager(DataSource datasource){
                 DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();

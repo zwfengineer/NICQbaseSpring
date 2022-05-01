@@ -3,27 +3,17 @@ package com.example.nicqbasespring.dao;
 import com.example.nicqbasespring.entries.User;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Repository
 @Slf4j
 public class UserDao extends AbstraDao implements UserDaoImpl{
 
-    @Autowired(required = false)
-    public void setJdbctemplate(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-    @Autowired(required = false)
-    public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
     @Override
     public Object getUserName(String uid) {
         String sql = "select username from user where uid=?";
@@ -153,5 +143,29 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
     public List<Map<String,Object>> searchUser(String uid, String gender) {
         String sql = "select uid,username from user where uid like ? or username like ? and gender = ?";
         return jdbcTemplate.queryForList(sql,uid,gender);
+    }
+
+    @Override
+    public Boolean isOnline(String uid) {
+        Set<Object> onlineusers  = redisTemplate.opsForHash().keys("onlineuser");
+//        优化点！
+        for(Object onlineuid:onlineusers){
+            if (onlineuid.equals(uid)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void createinbox(String uid){
+        String tablename = uid+"_inbox";
+        String sql = String.format("create table nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data varchar(255),unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
+        jdbcTemplate.update(sql);
+    }
+
+    public void createoutbox(String uid){
+        String tablename = uid+"_outbox";
+        String sql = String.format("create table  nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data varchar(255),unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
+        jdbcTemplate.update(sql);
     }
 }
