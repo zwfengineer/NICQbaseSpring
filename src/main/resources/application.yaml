@@ -1,5 +1,15 @@
 server:
   port: 1258
+  servlet:
+    session:
+      cookie:
+        same-site: none
+  ssl:
+    protocol: TLS
+    key-store: classpath:keystore.p12
+    key-store-type: JKS
+    key-store-password: zwf123
+  shutdown: graceful
 spring:
   redis:
     host: localhost

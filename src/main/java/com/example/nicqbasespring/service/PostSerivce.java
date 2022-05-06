@@ -20,6 +20,7 @@ import javax.websocket.EncodeException;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -50,7 +51,7 @@ public class PostSerivce extends AbstraService{
     private  void PostUser(@NotNull Message message, Session session) throws EncodeException, IOException {
         try{
             PostUserCheck(message.getFrom(),message.getTo());
-            if (userDao.isOnline(message.getTo())){
+            if (userDao.inHashTable("onlineuser",message.getTo())){
                 WebSocketConnect connect = WebSocketConnect.getConnectbyUserid(message.getTo());
                 connect.session.getBasicRemote().sendObject(message);
             }
@@ -99,12 +100,16 @@ public class PostSerivce extends AbstraService{
     }
 
     public Boolean userExistCheck(String uid,String fid){
-        if((Integer)userDao.checkUserNum(uid)!=1){
+        if(! userDao.checkUserNum(uid).equals(1)){
             return false;
         }
-        if ((Integer)userDao.checkUserNum(fid)!=1){
+        if (! userDao.checkUserNum(fid).equals(1)){
             return false;
         }
-        return false;
+        return true;
+    }
+
+    public Set<Object> GetAddFriendRequest(String uid){
+        return messageDao.getFriednRequest(uid);
     }
 }

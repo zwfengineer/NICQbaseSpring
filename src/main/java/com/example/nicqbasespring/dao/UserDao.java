@@ -145,17 +145,6 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
         return jdbcTemplate.queryForList(sql,uid,gender);
     }
 
-    @Override
-    public Boolean isOnline(String uid) {
-        Set<Object> onlineusers  = redisTemplate.opsForHash().keys("onlineuser");
-//        优化点！
-        for(Object onlineuid:onlineusers){
-            if (onlineuid.equals(uid)){
-                return true;
-            }
-        }
-        return false;
-    }
 
     public void createinbox(String uid){
         String tablename = uid+"_inbox";
@@ -167,5 +156,13 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
         String tablename = uid+"_outbox";
         String sql = String.format("create table  nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data varchar(255),unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
         jdbcTemplate.update(sql);
+    }
+
+    public void deleteHash(String hashname,String hashkey){
+        redisTemplate.opsForHash().delete(hashname,hashkey);
+    }
+
+    public boolean inHashTable(String hashname,String hashkey){
+        return  redisTemplate.opsForHash().hasKey(hashname,hashkey);
     }
 }

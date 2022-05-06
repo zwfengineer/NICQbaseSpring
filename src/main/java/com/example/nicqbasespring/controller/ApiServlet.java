@@ -1,9 +1,9 @@
 package com.example.nicqbasespring.controller;
 
 import com.example.nicqbasespring.entries.User;
+import com.example.nicqbasespring.service.PostSerivce;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,8 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpCookie;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.*;
@@ -36,9 +40,13 @@ public class ApiServlet {
     public void setRedisTemplate(RedisTemplate<String,Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
+    private PostSerivce postSerivce;
+    @Autowired(required = false)
+    public void setPostSerivce(PostSerivce postSerivce) {
+        this.postSerivce = postSerivce;
+    }
 
-
-//    @RequestMapping(value = "/**",method = RequestMethod.POST)
+    //    @RequestMapping(value = "/**",method = RequestMethod.POST)
 //    public void apitpreprocessing(HttpSession httpSession){
 //        System.out.println(httpSession.getAttribute("Logined").toString());
 //        if (httpSession.getAttribute("Logined")==null){
@@ -55,10 +63,11 @@ public class ApiServlet {
 
 
     @RequestMapping(value="/login",method = RequestMethod.POST)
-    public String Login(@RequestBody @NotNull User user, @NotNull HttpSession httpSession){
+    public String Login(@RequestBody @NotNull User user, @NotNull HttpSession httpSession, HttpServletResponse httpServletResponse){
         log.info(user.getUserName()+user.getPasswd());
 //        WebSocketConnect.logout(httpSession);
-        Object logindata = userService.LoginServer(user);
+
+        Object logindata = userService.LoginServer(user,httpSession);
         if(logindata.getClass().getSimpleName().equals("User"))
         {
             ObjectNode data = (ObjectNode) UserUtil.getUserJson((User)logindata);
@@ -71,6 +80,7 @@ public class ApiServlet {
             log.info(httpSession.getId());
             log.info(data.toString());
             httpSession.setMaxInactiveInterval(-1);
+
             return data.toString();
         }
         else{
@@ -94,8 +104,7 @@ public class ApiServlet {
 
     @RequestMapping(value="/getfriendlist",method = RequestMethod.POST)
     public String getfriendlist(@NotNull HttpSession httpSession) {
-        List<String> list = UserUtil.asList(httpSession.getAttributeNames().asIterator());
-        if (list.contains("Logined")&list.contains("user")){
+        if (userService.isOnline(httpSession)){
             Object dataobject = userService.getFriends((User) httpSession.getAttribute("user"));
             System.out.println(dataobject.getClass().toString());
             if (dataobject.getClass().getSimpleName().equals("ArrayNode")){
@@ -122,33 +131,55 @@ public class ApiServlet {
     }
 
     @RequestMapping(value = "/searchuser",method = RequestMethod.POST)
-    public String  searchuser(@RequestBody ObjectNode searchData,HttpSession httpSession){
-        if (redisTemplate.opsForHash().values("onlineuser").contains(httpSession.getId())) {
-            if (searchData.get("userName").asText().length() <=0) {
-                searchData.put("userName", "^");
-            }
-            Object data = userService.searchUser(searchData.get("userName").asText());
-            if (data.getClass().getSimpleName().equals("String")) {
-                return (String) data;
+    public String  searchuser(@RequestBody ObjectNode searchData,HttpSession httpSession)   {
+        try{
+            User user = (User)httpSession.getAttribute("user");
+            if (userService.isOnline(user.getUID())) {
+                if (searchData.get("userName").asText().length() <=0) {
+                    searchData.put("userName", "^");
+                }
+                Object data = userService.searchUser(searchData.get("userName").asText());
+                if (data.getClass().getSimpleName().equals("String")) {
+                    return (String) data;
+                } else {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    JsonNode jsondata = objectMapper.valueToTree(data);
+                    return jsondata.toString();
+                }
             } else {
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode jsondata = objectMapper.valueToTree(data);
-                return jsondata.toString();
+                return "user invalid";
             }
-        } else {
+        }catch (Exception e){
             return "user invalid";
         }
+
 
     }
 
     @RequestMapping(value = "/addFriend",method = RequestMethod.POST)
     public String addFriend(@RequestBody String uid,HttpSession httpSession){
-        if (redisTemplate.opsForHash().values("onlineuser").contains(httpSession.getId())){
-            User user = (User) httpSession.getAttribute("User");
-            if (uid.length() !=0){
+        try{
+            User user = (User) httpSession.getAttribute("user");
+            if (userService.isOnline(uid)){
                 return (String) userService.addFriends(user,uid);
             }
+        }catch (Exception e){
+            return "User invalid";
         }
         return "User invalid";
+    }
+
+    @RequestMapping(value = "/getAddFriendRequest",method = RequestMethod.POST)
+    public Object getaddfriendrequest(HttpSession httpSession){
+        if(userService.isOnline(httpSession)){
+            Set<Object> data =  postSerivce.GetAddFriendRequest(UserUtil.getHttpSessionUser(httpSession).getUID());
+            if (data.isEmpty()){
+                return new ArrayList<>();
+            }else{
+                return data;
+            }
+        }else{
+            return "Invialid Get";
+        }
     }
 }

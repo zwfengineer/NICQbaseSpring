@@ -1,24 +1,19 @@
 package com.example.nicqbasespring.controller;
-import clojure.lang.Obj;
 import com.example.nicqbasespring.config.NicqWebSocketConfig;
 import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
-import com.example.nicqbasespring.exception.MessageErrorType;
-import com.example.nicqbasespring.exception.MessageException;
 import com.example.nicqbasespring.exception.WebsocketException;
 import com.example.nicqbasespring.exception.WebsocketExceptionType;
 import com.example.nicqbasespring.service.PostSerivce;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
-import com.example.nicqbasespring.util.WebSocketCloseCode;
+import com.example.nicqbasespring.exception.WebSocketCloseCode;
 import com.example.nicqbasespring.entries.MessageType;
 import com.example.nicqbasespring.util.WebSocketEncoder;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -71,13 +66,16 @@ public  class WebSocketConnect {
             this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
             User user = (User) this.httpSession.getAttribute("user");
             onLineUserList.put(session.getId(), this);
-            redisTemplate.opsForHash().put("onlineuser", user.getUID(), httpSession.getId());
+            if(! userService.isOnline(user.getUID())){
+                userService.LoginServer(user,httpSession);
+            }
             log.info("user:" + user.getUserName() + "Connect success" + "UserNums:" + onLineUserList.size());
         }
     }
 
     @OnMessage
     public void onMessage(String messagetext,Session session) throws IOException, EncodeException {
+        System.out.println(messagetext);
         Message message = objectMapper.readValue(messagetext,Message.class);
         System.out.println(message.toString());
         postSerivce.Post(message,session);
@@ -88,7 +86,7 @@ public  class WebSocketConnect {
         if(this.valid) {
             try{
                 User user = (User) this.httpSession.getAttribute("user");
-                redisTemplate.opsForHash().delete("onlineuser",user.getUID());
+                userService.Logout(user.getUID());
                 log.info("user: " + user.getUserName() + " logout");
             }catch (IllegalStateException illegalStateException){
                 log.info("user session lost websocket server close");
@@ -140,21 +138,33 @@ public  class WebSocketConnect {
         return true;
     }
 
+    public static void sessionClose(WebSocketConnect webSocketConnect){
+        webSocketConnect.valid = false;
+        User user = (User) webSocketConnect.httpSession.getAttribute("user");
+        userService.Logout(user.getUID());
+    }
+
     public static void logout(HttpSession httpSession) throws IOException {
-        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
-            if (Objects.equals(webSocketConnect.httpSession.getId(), httpSession.getId())){
-                webSocketConnect.session.close();
-                webSocketConnect.valid = false;
+        try {
+            WebSocketConnect connect = getConnectbyHttpsessionid(httpSession.getId());
+            if(connect.valid){
+                sessionClose(connect);
             }
+            connect.session.close();
+        }catch (WebsocketException websocketException){
+            log.info("connect invlid");
         }
     }
 
     public static void logout(HttpSession httpSession,CloseReason closeReason)throws IOException {
-        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
-            if (Objects.equals(webSocketConnect.httpSession.getId(), httpSession.getId())){
-                webSocketConnect.session.close(closeReason);
-                webSocketConnect.valid = false;
+        try {
+            WebSocketConnect connect = getConnectbyHttpsessionid(httpSession.getId());
+            if(connect.valid){
+                sessionClose(connect);
             }
+            connect.session.close(closeReason);
+        }catch (WebsocketException websocketException){
+            log.info("connect invlid");
         }
     }
 
@@ -201,5 +211,12 @@ public  class WebSocketConnect {
             }
         }
         throw new WebsocketException(WebsocketExceptionType.Online_User_Lost);
+    }
+
+    public static void ServiceShutdown(CloseReason closeReason) throws IOException {
+        log.info(String.valueOf(onLineUserList.size()));
+        for(WebSocketConnect webSocketConnect:onLineUserList.values()){
+            webSocketConnect.session.close(closeReason);
+        }
     }
 }

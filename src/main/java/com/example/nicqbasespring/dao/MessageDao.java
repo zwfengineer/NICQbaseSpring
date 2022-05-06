@@ -10,6 +10,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
+import java.util.Set;
+
 @Repository
 @Slf4j
 public class MessageDao extends AbstraDao implements MessageDaoImpl{
@@ -21,7 +23,7 @@ public class MessageDao extends AbstraDao implements MessageDaoImpl{
             throw new MessageException(MessageErrorType.Repeat_Post);
         }
     }
-    public Object getFriednRequest(String uid){
+    public Set<Object> getFriednRequest(String uid){
         return redisTemplate
                 .opsForSet()
                 .members(uid+"AddFriendRequestList");

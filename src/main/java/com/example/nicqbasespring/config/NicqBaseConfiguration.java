@@ -14,6 +14,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PreDestroy;
 import javax.sql.DataSource;
 import java.util.logging.Logger;
 
@@ -61,4 +62,6 @@ public class NicqBaseConfiguration {
         public ObjectMapper getObjectMapper(){
                 return new ObjectMapper();
         }
+
+
 }

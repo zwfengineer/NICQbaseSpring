@@ -20,8 +20,8 @@ public class NicqWebConfiguration {
         return new WebMvcConfigurer() {
             public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("*")
-//                        .allowedOrigins("http://192.168.10.1:1938")
+//                        .allowedOriginPatterns("*")
+                        .allowedOrigins("http://localhost:1938")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true);

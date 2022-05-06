@@ -10,6 +10,7 @@ import com.example.nicqbasespring.util.UserUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLOutput;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +43,7 @@ class NicQbaseSpringApplicationTests {
     MessageDao messageDao;
 
     @Test()
-    void contextLoads() throws JsonProcessingException {
+    void contextLoads() {
 
     }
     /*
@@ -121,9 +123,10 @@ class NicQbaseSpringApplicationTests {
         userDao.createinbox(uid);
         userDao.createoutbox(uid);
         JdbcTemplate jdbcTemplate = (JdbcTemplate) context.getBean("nicqjdbcTemplate");
-        String sql = String.format("drop table nicqmessagedatabase.`%s`",uid);
-        jdbcTemplate.update(sql);
-
+        String[] tablenames = new String[]{uid+"_inbox",uid+"_outbox"};
+        for(String tablename:tablenames){
+            jdbcTemplate.update(String.format("drop table nicqmessagedatabase.`%s`",tablename));
+        }
     }
     @Test
     @Transactional
@@ -141,4 +144,12 @@ class NicQbaseSpringApplicationTests {
         System.out.println(messageDao.getHistoryMessageCount("22-04-29-10","22-04-29-11"));
     }
 
+    @Test
+    public void test11(){
+        Message message = new Message("bb","aa",DataType.Text,new Timestamp(System.currentTimeMillis()),MessageType.UserMessage);
+        System.out.println(message);
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode objectNode = objectMapper.valueToTree(message);
+        System.out.println(objectNode);
+    }
 }

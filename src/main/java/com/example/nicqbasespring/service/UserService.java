@@ -4,6 +4,7 @@ import com.example.nicqbasespring.dao.MessageDao;
 import com.example.nicqbasespring.dao.UserDao;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
+import com.example.nicqbasespring.util.UserUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,11 +28,12 @@ import java.util.logging.Logger;
 @Service
 @Slf4j
 public  class UserService extends AbstraService {
-    public Object LoginServer(@NotNull User user){
+    public Object LoginServer(@NotNull User user, HttpSession httpSession){
         user.setUID(String.valueOf( userDao.getUid(user.getUserName())));
         Integer num = (Integer) userDao.checkUserNum(user);
         log.info(num.toString());
         if(num==1) {
+            redisTemplate.opsForHash().put("onlineuser", user.getUID(), httpSession.getId());
             return userDao.getUser(user.getUID());
         }
         else {
@@ -105,5 +108,24 @@ public  class UserService extends AbstraService {
             return "null";
         }
         return data;
+    }
+    public void Logout(String uid){
+        userDao.deleteHash("onlineuser",uid);
+    }
+    public Boolean isOnline(String uid){
+        try{
+            return userDao.inHashTable("onlineuser",uid);
+        }catch (Exception e){
+            return false;
+        }
+
+    }
+    public Boolean isOnline(HttpSession httpSession){
+        try{
+            return userDao.inHashTable("onlineuser", UserUtil.getHttpSessionUser(httpSession).getUID());
+        }catch (Exception e){
+            return false;
+        }
+
     }
 }

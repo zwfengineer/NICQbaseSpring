@@ -25,5 +25,5 @@ public interface UserDaoImpl {
      List<Map<String,Object>> getFriends(String uid)throws JsonProcessingException;
      List<Map<String,Object>> searchUser(String uid);
      List<Map<String,Object>> searchUser(String uid, String gender);
-     Boolean isOnline(String uid);
+
 }
