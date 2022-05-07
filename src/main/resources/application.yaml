@@ -9,7 +9,7 @@ server:
     key-store: classpath:keystore.p12
     key-store-type: JKS
     key-store-password: zwf123
-  shutdown: graceful
+#  shutdown: graceful
 spring:
   redis:
     host: localhost

@@ -1,6 +1,7 @@
 package com.example.nicqbasespring.controller;
 
 import com.example.nicqbasespring.entries.User;
+import com.example.nicqbasespring.exception.WebSocketCloseCode;
 import com.example.nicqbasespring.service.PostSerivce;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
@@ -22,6 +23,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.websocket.CloseReason;
 import java.io.IOException;
 import java.util.*;
 
@@ -115,8 +117,10 @@ public class ApiServlet {
     }
 
     @RequestMapping(value = "/logout",method = RequestMethod.POST)
-    public void logout(HttpSession httpSession, HttpServletRequest httpServletRequest) throws  IOException {
-        WebSocketConnect.logout(httpSession);
+    public void logout(HttpSession httpSession, HttpServletRequest httpServletRequest) throws IOException {
+//        用户退出接口
+        httpSession.setAttribute("Logined",false);
+        WebSocketConnect.logout(httpSession,new CloseReason(WebSocketCloseCode.USER_PROACTIVELY_EXIT,"User Proactively Exit"));
         httpSession.invalidate();
         httpServletRequest.getSession(true);
         log.info(httpSession.getId());

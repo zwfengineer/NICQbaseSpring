@@ -139,29 +139,13 @@ public  class WebSocketConnect {
     }
 
     public static void sessionClose(WebSocketConnect webSocketConnect){
-        webSocketConnect.valid = false;
         User user = (User) webSocketConnect.httpSession.getAttribute("user");
         userService.Logout(user.getUID());
-    }
-
-    public static void logout(HttpSession httpSession) throws IOException {
-        try {
-            WebSocketConnect connect = getConnectbyHttpsessionid(httpSession.getId());
-            if(connect.valid){
-                sessionClose(connect);
-            }
-            connect.session.close();
-        }catch (WebsocketException websocketException){
-            log.info("connect invlid");
-        }
     }
 
     public static void logout(HttpSession httpSession,CloseReason closeReason)throws IOException {
         try {
             WebSocketConnect connect = getConnectbyHttpsessionid(httpSession.getId());
-            if(connect.valid){
-                sessionClose(connect);
-            }
             connect.session.close(closeReason);
         }catch (WebsocketException websocketException){
             log.info("connect invlid");

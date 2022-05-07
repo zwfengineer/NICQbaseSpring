@@ -16,11 +16,10 @@ import java.util.Set;
 @Slf4j
 public class MessageDao extends AbstraDao implements MessageDaoImpl{
     public void addFriendRequest(Message message){
-        if((Boolean.FALSE.equals(redisTemplate.opsForSet().isMember(message.getTo() + "AddFriendRequestList", message)))){
-                redisTemplate
-                        .opsForSet().add(message.getTo() + "AddFriendRequestList", message);
+        if( ! checkrepeat(message)){
+            redisTemplate.opsForSet().add(message.getTo() + "AddFriendRequestList", message);
         }else{
-            throw new MessageException(MessageErrorType.Repeat_Post);
+            throw  new MessageException(MessageErrorType.Repeat_Post);
         }
     }
     public Set<Object> getFriednRequest(String uid){
@@ -68,5 +67,16 @@ public class MessageDao extends AbstraDao implements MessageDaoImpl{
         String inbox = uid+"_inbox";
         String sql = String.format("select count(*) from nicqmessagedatabase.`%s` inbox where inbox.fromuser =?",inbox);
         return  jdbcTemplate.queryForObject(sql,Integer.class,fid);
+    }
+    public Boolean checkrepeat(Message message){
+        Set<Object> messages = redisTemplate.opsForSet().members(message.getTo()+"AddFriendRequestList");
+        if(messages!=null) {
+            for (Object object : messages) {
+                if (((Message) object).getData().equals(message.getData())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
