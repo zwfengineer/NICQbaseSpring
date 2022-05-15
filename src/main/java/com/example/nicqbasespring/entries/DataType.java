@@ -6,7 +6,8 @@ public enum DataType {
     Video("Video"),
     OnlineVideo("OnlineVideo"),
     Voice("Voice"),
-    OnlineVioce("OnlineVoice");
+    OnlineVioce("OnlineVoice"),
+    Directive("Directive");
     private final String desc;
     DataType(String desc){
         this.desc = desc;

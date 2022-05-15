@@ -5,4 +5,5 @@ public enum  MessageErrorType{
     Poster_Blacklist,
     Recevicer_Blacklist,
     User_Invilid,
+    Not_Friend,
 }

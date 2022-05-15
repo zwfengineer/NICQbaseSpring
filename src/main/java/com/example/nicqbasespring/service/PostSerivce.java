@@ -1,5 +1,6 @@
 package com.example.nicqbasespring.service;
 
+import clojure.lang.Obj;
 import com.example.nicqbasespring.controller.WebSocketConnect;
 import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
@@ -7,6 +8,8 @@ import com.example.nicqbasespring.entries.MessageType;
 import com.example.nicqbasespring.exception.MessageErrorType;
 import com.example.nicqbasespring.exception.MessageException;
 import com.example.nicqbasespring.util.UserUtil;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,7 @@ import javax.websocket.EncodeException;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.Set;
 
 @Component
@@ -37,10 +41,13 @@ public class PostSerivce extends AbstraService{
         switch (message.getMessageType()){
             case UserMessage:
                 PostUser(message,session);
+                break;
             case SystemMessage:
                 PostSystem(message, session);
+                break;
             case AddFriendRequest:
                 PostAddFriendRequest(message,session);
+                break;
         }
     }
 
@@ -77,6 +84,7 @@ public class PostSerivce extends AbstraService{
              try {
                  messageDao.addFriendRequest(message);
                  message.setData(objectNode);
+                 WebSocketConnect.addfirendrequestevent(message.getTo());
              }catch (MessageException messageException){
                  objectNode.put("posted","false");
                  objectNode.put("message", String.valueOf(messageException));
@@ -97,6 +105,9 @@ public class PostSerivce extends AbstraService{
         if(! userExistCheck(uid,fid)){
             throw new MessageException(MessageErrorType.User_Invilid);
         }
+        if(userDao.checkFriend(uid, fid) != 1){
+            throw new MessageException(MessageErrorType.Not_Friend);
+        }
     }
 
     public Boolean userExistCheck(String uid,String fid){
@@ -109,7 +120,14 @@ public class PostSerivce extends AbstraService{
         return true;
     }
 
-    public Set<Object> GetAddFriendRequest(String uid){
-        return messageDao.getFriednRequest(uid);
+    public Set<ObjectNode> GetAddFriendRequest(String uid)  {
+        Set<Object> addfriendrequestlist = messageDao.getFriednRequest(uid);
+        Set<ObjectNode> addfriendrequestnodelist = new HashSet<>();
+        for (Object object : addfriendrequestlist){
+            ObjectNode objectNode = objectMapper.valueToTree(object);
+            objectNode.put("fname", userDao.getUserName(((Message)object).getFrom()));
+            addfriendrequestnodelist.add(objectNode);
+        }
+        return addfriendrequestnodelist;
     }
 }

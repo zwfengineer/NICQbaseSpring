@@ -15,7 +15,7 @@ import java.util.Set;
 public class UserDao extends AbstraDao implements UserDaoImpl{
 
     @Override
-    public Object getUserName(String uid) {
+    public String getUserName(String uid) {
         String sql = "select username from user where uid=?";
         return jdbcTemplate.queryForObject(sql,String.class,uid);
     }
@@ -111,7 +111,7 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
     }
 
 
-    public Object checkFriend(String uid,String fid){
+    public Integer checkFriend(String uid,String fid){
         String sql = "select count(*) from friends where uid = ? and fid=?";
         return jdbcTemplate.queryForObject(sql,Integer.class,uid,fid);
     }
@@ -148,13 +148,13 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
 
     public void createinbox(String uid){
         String tablename = uid+"_inbox";
-        String sql = String.format("create table nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data varchar(255),unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
+        String sql = String.format("create table nicqmessagedatabase.`%s`(from varchar(40),to varchar(40),data text,unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
         jdbcTemplate.update(sql);
     }
 
     public void createoutbox(String uid){
         String tablename = uid+"_outbox";
-        String sql = String.format("create table  nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data varchar(255),unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
+        String sql = String.format("create table  nicqmessagedatabase.`%s`(from varchar(40),to varchar(40),data text,unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
         jdbcTemplate.update(sql);
     }
 
@@ -164,5 +164,8 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
 
     public boolean inHashTable(String hashname,String hashkey){
         return  redisTemplate.opsForHash().hasKey(hashname,hashkey);
+    }
+    public void Login(String uid,String httpsessionid){
+        redisTemplate.opsForHash().put("onlineuser", uid, httpsessionid);
     }
 }

@@ -5,16 +5,19 @@ import com.example.nicqbasespring.entries.DataType;
 import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.MessageType;
 import com.example.nicqbasespring.entries.User;
+import com.example.nicqbasespring.service.HistoryMessageService;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -30,7 +33,10 @@ import java.util.Map;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@Slf4j
 class NicQbaseSpringApplicationTests {
+    @Autowired
+    HistoryMessageService historyMessageService;
     @Autowired
     ApplicationContext context;
     @Autowired
@@ -151,5 +157,18 @@ class NicQbaseSpringApplicationTests {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode objectNode = objectMapper.valueToTree(message);
         System.out.println(objectNode);
+    }
+    @Test
+    public void test12(){
+        try {
+            log.info(userService.getUserName("lll"));
+        }catch (EmptyResultDataAccessException exception){
+            log.info("null");
+        }
+    }
+    @Test
+//    MessageService->loadhistoy
+    public void test13(){
+        System.out.println(historyMessageService.load("22-05-14-11"));
     }
 }

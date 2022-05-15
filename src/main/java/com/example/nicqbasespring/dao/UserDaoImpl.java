@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface UserDaoImpl {
-     Object getUserName(String uid);
+     String getUserName(String uid);
      Object checkUserNum(User user);
      Object checkUserNum(String uid);
      Object modifyUserLevel(User user);

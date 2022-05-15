@@ -1,7 +1,9 @@
 package com.example.nicqbasespring.controller;
 
+import com.example.nicqbasespring.entries.Message;
 import com.example.nicqbasespring.entries.User;
 import com.example.nicqbasespring.exception.WebSocketCloseCode;
+import com.example.nicqbasespring.service.HistoryMessageService;
 import com.example.nicqbasespring.service.PostSerivce;
 import com.example.nicqbasespring.service.UserService;
 import com.example.nicqbasespring.util.UserUtil;
@@ -11,6 +13,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,30 +30,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
+import javax.websocket.EncodeException;
 import java.io.IOException;
 import java.util.*;
 
 
 @RestController
 @Slf4j
+@AllArgsConstructor
+@NonNull
 @Tag(name = "http api",description = "http api 接口")
 public class ApiServlet {
+    private HistoryMessageService historyMessageService;
     private UserService userService;
-    @Autowired(required = false)
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
     private RedisTemplate<String,Object> redisTemplate;
-    @Autowired(required = false)
-    public void setRedisTemplate(RedisTemplate<String,Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
     private PostSerivce postSerivce;
-    @Autowired(required = false)
-    public void setPostSerivce(PostSerivce postSerivce) {
-        this.postSerivce = postSerivce;
-    }
-
+    private ObjectMapper objectMapper;
     //    @RequestMapping(value = "/**",method = RequestMethod.POST)
 //    public void apitpreprocessing(HttpSession httpSession){
 //        System.out.println(httpSession.getAttribute("Logined").toString());
@@ -65,7 +63,7 @@ public class ApiServlet {
 
 
     @RequestMapping(value="/login",method = RequestMethod.POST)
-    public String Login(@RequestBody @NotNull User user, @NotNull HttpSession httpSession, HttpServletResponse httpServletResponse){
+    public String Login(@RequestBody @NotNull User user, @NotNull HttpSession httpSession){
         log.info(user.getUserName()+user.getPasswd());
 //        WebSocketConnect.logout(httpSession);
 
@@ -104,17 +102,6 @@ public class ApiServlet {
         }
     }
 
-    @RequestMapping(value="/getfriendlist",method = RequestMethod.POST)
-    public String getfriendlist(@NotNull HttpSession httpSession) {
-        if (userService.isOnline(httpSession)){
-            Object dataobject = userService.getFriends((User) httpSession.getAttribute("user"));
-            System.out.println(dataobject.getClass().toString());
-            if (dataobject.getClass().getSimpleName().equals("ArrayNode")){
-                return dataobject.toString();
-            }
-        }
-        return "null";
-    }
 
     @RequestMapping(value = "/logout",method = RequestMethod.POST)
     public void logout(HttpSession httpSession, HttpServletRequest httpServletRequest) throws IOException {
@@ -126,14 +113,18 @@ public class ApiServlet {
         log.info(httpSession.getId());
     }
 
-    @RequestMapping(value = "/test",method = RequestMethod.GET)
-    public String test(HttpSession httpSession){
+    @RequestMapping(value = "/countonlineuser",method = RequestMethod.GET)
+    public String countonlineuser(HttpSession httpSession){
         log.info("httpsession"+httpSession.getId());
         redisTemplate.getClientList();
         redisTemplate.opsForValue().set("countUserNum", WebSocketConnect.onlineusernum());
         return (Objects.requireNonNull(redisTemplate.opsForValue().get("countUserNum"))).toString();
     }
-
+    @RequestMapping(value = "/test",method = RequestMethod.GET)
+    public Object test(@RequestBody String uid){
+        log.info(uid);
+        return historyMessageService.load(uid);
+    }
     @RequestMapping(value = "/searchuser",method = RequestMethod.POST)
     public String  searchuser(@RequestBody ObjectNode searchData,HttpSession httpSession)   {
         try{
@@ -161,29 +152,64 @@ public class ApiServlet {
     }
 
     @RequestMapping(value = "/addFriend",method = RequestMethod.POST)
-    public String addFriend(@RequestBody String uid,HttpSession httpSession){
-        try{
-            User user = (User) httpSession.getAttribute("user");
-            if (userService.isOnline(uid)){
-                return (String) userService.addFriends(user,uid);
-            }
-        }catch (Exception e){
-            return "User invalid";
+    public String addFriend(@RequestBody String uid,HttpSession httpSession) throws EncodeException, IOException {
+        if (userService.isOnline(httpSession)){
+            return (String) userService.addFriends(UserUtil.getHttpSessionUser(httpSession),uid);
+        }else{
+            return "null";
         }
-        return "User invalid";
+    }
+
+    @RequestMapping(value="/getfriendlist",method = RequestMethod.POST)
+    public String getfriendlist(@NotNull HttpSession httpSession) {
+        if (userService.isOnline(httpSession)){
+            Object dataobject = userService.getFriends((User) httpSession.getAttribute("user"));
+            System.out.println(dataobject.getClass().toString());
+            if (dataobject.getClass().getSimpleName().equals("ArrayNode")){
+                return dataobject.toString();
+            }
+        }
+        return "null";
     }
 
     @RequestMapping(value = "/getAddFriendRequest",method = RequestMethod.POST)
-    public Object getaddfriendrequest(HttpSession httpSession){
+    public Object getaddfriendrequest(HttpSession httpSession) {
         if(userService.isOnline(httpSession)){
-            Set<Object> data =  postSerivce.GetAddFriendRequest(UserUtil.getHttpSessionUser(httpSession).getUID());
+            Set<ObjectNode> data =  postSerivce.GetAddFriendRequest(UserUtil.getHttpSessionUser(httpSession).getUID());
             if (data.isEmpty()){
                 return new ArrayList<>();
             }else{
                 return data;
             }
         }else{
-            return "Invialid Get";
+            return "null";
         }
+    }
+
+    @RequestMapping(value = "/getUserName")
+    public String getUserName(String uid,HttpSession httpSession){
+        if(userService.isOnline(httpSession)){
+            return  userService.getUserName(uid);
+        }else{
+            return null;
+        }
+    }
+
+    @RequestMapping(value = "/pullHistoryMessage",method = RequestMethod.POST)
+    public String pullHistoryMessage(HttpSession httpSession){
+        if(userService.isOnline(httpSession)){
+            Map<String,List<Message>> data = historyMessageService.load(UserUtil.getHttpSessionUser(httpSession).getUID());
+            return objectMapper.valueToTree(data).asText();
+        }
+        return null;
+
+    }
+
+    public Object getHistoryMessage(){
+        return null;
+    }
+
+    public Object getHistoryMessageSummary(){
+        return  null;
     }
 }

@@ -19,13 +19,9 @@ import java.io.IOException;
 public class NicqStopEventListener implements ApplicationListener<ContextClosedEvent> {
     @Autowired
     RedisTemplate <String, Object> redisTemplate;
-    @PreDestroy
-    public void destroy() {
-        redisTemplate.delete("onlineuser");
-    }
-
     @Override
     public void onApplicationEvent(@NotNull ContextClosedEvent event) {
+        redisTemplate.delete("onlineuser");
         try {
             WebSocketConnect.ServiceShutdown(new CloseReason(WebSocketCloseCode.Serve_Shutdown_Proactively,"Server shutdown proactvely"));
         } catch (IOException e) {

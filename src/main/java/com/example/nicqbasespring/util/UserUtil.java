@@ -30,5 +30,16 @@ public class UserUtil {
     public static User getHttpSessionUser(HttpSession httpSession){
         return (User) httpSession.getAttribute("user");
     }
+    public static <T extends Enum<T>> T getEnumFromString(Class<T> clazz,String desc){
+        if(clazz !=null && desc!=null){
+            try{
+                return Enum.valueOf(clazz,desc.trim());
+
+            }catch (IllegalStateException illegalStateException){
+
+            }
+        }
+        return null;
+    }
 }
 

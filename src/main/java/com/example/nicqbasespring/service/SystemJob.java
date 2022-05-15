@@ -15,6 +15,6 @@ import java.io.IOException;
 public class SystemJob {
     @Scheduled(fixedDelay =10000)
     public void run() throws EncodeException, IOException {
-        WebSocketConnect.KeepHeart();
+//        WebSocketConnect.KeepHeart();
     }
 }

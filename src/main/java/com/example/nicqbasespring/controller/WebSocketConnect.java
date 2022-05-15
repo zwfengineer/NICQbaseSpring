@@ -47,11 +47,6 @@ public  class WebSocketConnect {
     public void setUserService(UserService userService) {
         WebSocketConnect.userService = userService;
     }
-    private static RedisTemplate<String, Object> redisTemplate;
-    @Autowired(required = false)
-    public void setRedisTemplate(RedisTemplate<String, Object>  redisTemplate) {
-        WebSocketConnect.redisTemplate = redisTemplate;
-    }
     public static ObjectMapper objectMapper;
     @Autowired(required = false)
     public void setObjectMapper(ObjectMapper objectMapper) {
@@ -75,7 +70,7 @@ public  class WebSocketConnect {
 
     @OnMessage
     public void onMessage(String messagetext,Session session) throws IOException, EncodeException {
-        System.out.println(messagetext);
+        log.info(messagetext);
         Message message = objectMapper.readValue(messagetext,Message.class);
         System.out.println(message.toString());
         postSerivce.Post(message,session);
@@ -201,6 +196,37 @@ public  class WebSocketConnect {
         log.info(String.valueOf(onLineUserList.size()));
         for(WebSocketConnect webSocketConnect:onLineUserList.values()){
             webSocketConnect.session.close(closeReason);
+        }
+    }
+
+    public static void push(String uid,Object data) throws EncodeException, IOException {
+        WebSocketConnect connect =  getConnectbyUserid(uid);
+        connect.session.getBasicRemote().sendObject(data);
+    }
+    public static void addfriendEvent(String uid) {
+        try {
+            push(uid, new Message(
+                    "System",
+                    uid,
+                    "addfriendevent",
+                    new Timestamp(System.currentTimeMillis()),
+                    DataType.Directive,
+                    MessageType.ServerPush
+            ));
+        } catch (EncodeException | IOException ignored) {
+        }
+    }
+    public static void addfirendrequestevent(String uid){
+        try {
+            push(uid, new Message(
+                    "System",
+                    uid,
+                    "addfriendrequestevent",
+                    new Timestamp(System.currentTimeMillis()),
+                    DataType.Directive,
+                    MessageType.ServerPush
+            ));
+        }catch (Exception ignored){
         }
     }
 }

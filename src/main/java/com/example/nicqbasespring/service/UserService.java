@@ -1,5 +1,6 @@
 package com.example.nicqbasespring.service;
 
+import com.example.nicqbasespring.controller.WebSocketConnect;
 import com.example.nicqbasespring.dao.MessageDao;
 import com.example.nicqbasespring.dao.UserDao;
 import com.example.nicqbasespring.entries.Message;
@@ -13,10 +14,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
+import javax.websocket.EncodeException;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,7 +37,7 @@ public  class UserService extends AbstraService {
         Integer num = (Integer) userDao.checkUserNum(user);
         log.info(num.toString());
         if(num==1) {
-            redisTemplate.opsForHash().put("onlineuser", user.getUID(), httpSession.getId());
+            userDao.Login(user.getUID(), httpSession.getId());
             return userDao.getUser(user.getUID());
         }
         else {
@@ -53,9 +57,9 @@ public  class UserService extends AbstraService {
             return "UNKNOW ERROR";
         }
     }
-    public Object addFriends(@NotNull User user, String fid){
+    public Object addFriends(@NotNull User user, String fid) {
         /*
-                请确保 user 真实有效
+        请确保 user 真实有效
         */
         Object obj = userDao.checkUserNum(fid);
         if(! user.getUID().equals(fid)) {
@@ -64,6 +68,10 @@ public  class UserService extends AbstraService {
                     if (((Integer) obj) == 1) {
                         Object ckfObj = userDao.checkFriend(user.getUID(), fid);
                         if ("Integer".equals(ckfObj.getClass().getSimpleName())) {
+                            messageDao.cleanaddFriendRequestlist(user.getUID(),fid);
+                            if(isOnline(fid)){
+                                WebSocketConnect.addfriendEvent(fid);
+                            }
                             if ((Integer) ckfObj != 0) {
                                 return "OK:已经是好友了！";
                             } else {
@@ -127,5 +135,12 @@ public  class UserService extends AbstraService {
             return false;
         }
 
+    }
+    public String getUserName(String uid){
+        try {
+            return (String) userDao.getUserName(uid);
+        }catch (EmptyResultDataAccessException exception){
+            return "NULL";
+        }
     }
 }

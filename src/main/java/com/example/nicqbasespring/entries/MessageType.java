@@ -5,8 +5,9 @@ public enum MessageType {
     UserMessage("UserMessage"),
     SystemMessage("SystemMessage"),
     AddFriendRequest("AddFriendRequest"),
-    DeliverFeedback("DeliverFeedback");
-    private String desc;
+    DeliverFeedback("DeliverFeedback"),
+    ServerPush("ServerPush");
+    private final String desc;
     MessageType(String desc){
         this.desc=desc;
     }
