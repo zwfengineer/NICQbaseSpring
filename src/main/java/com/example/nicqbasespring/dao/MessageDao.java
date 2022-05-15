@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,10 +70,10 @@ public class MessageDao extends AbstraDao implements MessageDaoImpl{
         String inbox = uid+"_inbox";
         String outbox = uid+"_outbox";
         String sql = String.format(
-                "SELECT  * FROM(select * FROM nicqmessagedatabase.`%s` where fromuser =? union select * from nicqmessagedatabase.`%s` where  touser =?) as data order by unixtime limit ?,?",
+                "SELECT  * FROM(select * FROM nicqmessagedatabase.`%s` where fromuser =? union select * from nicqmessagedatabase.`%s` where  touser =?) as data order by unixtime desc limit ?,?",
                 inbox,outbox
         );
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new Message(
+        List<Message> resault=jdbcTemplate.query(sql, (rs, rowNum) -> new Message(
                 (String)rs.getObject("fromuser")
                 ,(String) rs.getObject("touser")
                 ,rs.getObject("data")
@@ -80,6 +81,8 @@ public class MessageDao extends AbstraDao implements MessageDaoImpl{
                 ,getEnumFromString(DataType.class, (String) rs.getObject("dataType"))
                 , getEnumFromString(MessageType.class,(String) rs.getObject("messageType"))
         ), fid, fid, base, offset);
+        Collections.reverse(resault);
+        return resault;
     }
     public Integer getHistoryMessageCount(String uid,String fid){
         String inbox = uid+"_inbox";

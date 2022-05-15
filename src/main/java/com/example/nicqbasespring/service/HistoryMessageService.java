@@ -23,7 +23,8 @@ public class HistoryMessageService extends AbstraService{
                            uid,
                            (String) friend.get("fid"),
                            0,
-                           10));
+                           10))
+           ;
        }
        return data;
     }

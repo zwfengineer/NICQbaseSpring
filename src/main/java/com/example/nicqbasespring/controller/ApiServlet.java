@@ -196,10 +196,12 @@ public class ApiServlet {
     }
 
     @RequestMapping(value = "/pullHistoryMessage",method = RequestMethod.POST)
-    public String pullHistoryMessage(HttpSession httpSession){
+    public Object pullHistoryMessage(HttpSession httpSession){
         if(userService.isOnline(httpSession)){
             Map<String,List<Message>> data = historyMessageService.load(UserUtil.getHttpSessionUser(httpSession).getUID());
-            return objectMapper.valueToTree(data).asText();
+            log.info(String.valueOf(data.size()), objectMapper.valueToTree(data).asText());
+//            return objectMapper.valueToTree(data).asText();
+            return data;
         }
         return null;
 
