@@ -3,6 +3,7 @@ package com.example.nicqbasespring.dao;
 import com.example.nicqbasespring.entries.User;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.stereotype.Repository;
 
@@ -57,14 +58,9 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
 
 
     @Override
-    public Object getUid(String username) {
+    public String getUid(String username) throws EmptyResultDataAccessException {
         String sql="select uid from user where username = ?";
-        try{
-            return jdbcTemplate.queryForObject(sql,String.class,username);
-        }catch (Exception e){
-            log.info(String.valueOf(e.getClass()));
-            return "查无此人！！！！";
-        }
+        return jdbcTemplate.queryForObject(sql,String.class,username);
 
     }
 
@@ -148,13 +144,13 @@ public class UserDao extends AbstraDao implements UserDaoImpl{
 
     public void createinbox(String uid){
         String tablename = uid+"_inbox";
-        String sql = String.format("create table nicqmessagedatabase.`%s`(from varchar(40),to varchar(40),data text,unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
+        String sql = String.format("create table nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data text,unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
         jdbcTemplate.update(sql);
     }
 
     public void createoutbox(String uid){
         String tablename = uid+"_outbox";
-        String sql = String.format("create table  nicqmessagedatabase.`%s`(from varchar(40),to varchar(40),data text,unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
+        String sql = String.format("create table  nicqmessagedatabase.`%s`(fromuser varchar(40),touser varchar(40),data text,unixtime datetime(3),dataType varchar(40),messageType varchar(40))",tablename);
         jdbcTemplate.update(sql);
     }
 

@@ -1,4 +1,5 @@
 package com.example.nicqbasespring;
+import clojure.lang.Obj;
 import com.example.nicqbasespring.dao.MessageDao;
 import com.example.nicqbasespring.dao.UserDao;
 import com.example.nicqbasespring.entries.DataType;
@@ -30,6 +31,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
@@ -75,28 +77,28 @@ class NicQbaseSpringApplicationTests {
     功能测试：添加与删除好友
      */
     @Test
-    public void test4(){
-        User user = (User) userDao.getUser((String) userDao.getUid("Rider"));
-        System.out.println(userService.removeFriend(user,(String) userDao.getUid("李重光")));
+    public void test4() {
+        User user = (User) userDao.getUser(userDao.getUid("Rider"));
+        System.out.println(userService.removeFriend(user, userDao.getUid("李重光")));
         System.out.println(
                 userService.removeFriend(
                         user,
-                        (String) userDao.getUid("影")
+                        userDao.getUid("影")
                 )
         );
     }
     @Test
-    public void test3(){
-        User user = (User) userDao.getUser((String) userDao.getUid("Rider"));
-        System.out.println(userService.addFriends(user,(String) userDao.getUid("李重光")));
-        System.out.println(userService.addFriends(user,(String) userDao.getUid("mk3")));
-        System.out.println(userService.addFriends(user,(String) userDao.getUid("awq")));
-        System.out.println(userService.addFriends(user,(String) userDao.getUid("阿巴瑟")));
-        System.out.println(userService.addFriends(user,(String) userDao.getUid("Rider")));
+    public void test3() {
+        User user = (User) userDao.getUser(userDao.getUid("Rider"));
+        System.out.println(userService.addFriends(user, userDao.getUid("李重光")));
+        System.out.println(userService.addFriends(user, userDao.getUid("mk3")));
+        System.out.println(userService.addFriends(user, userDao.getUid("awq")));
+        System.out.println(userService.addFriends(user, userDao.getUid("阿巴瑟")));
+        System.out.println(userService.addFriends(user, userDao.getUid("Rider")));
     }
     @Test
     public void test5() {
-        User user  = (User) userDao.getUser((String) userDao.getUid("Rider"));
+        User user  = (User) userDao.getUser(userDao.getUid("Rider"));
         System.out.println(userService.getFriends(user));
     }
     @Test
@@ -171,4 +173,38 @@ class NicQbaseSpringApplicationTests {
     public void test13(){
         System.out.println(historyMessageService.load("22-05-14-11"));
     }
+    @Test
+    public void test14(){
+//        Random random = new Random();
+//        JdbcTemplate jdbcTemplate = context.getBean(JdbcTemplate.class);
+//        List<String> ids = jdbcTemplate.queryForList("select uid from user",String.class);
+//        for(String id:ids){
+//            String sql ="update user set avatar=? where uid=?";
+//
+//            jdbcTemplate.update(sql,random.nextInt(12),id);
+//        }
+    }
+
+    @Test
+    public void test15(){
+        JdbcTemplate jdbcTemplate = context.getBean(JdbcTemplate.class);
+        List<Map<String, Object>> data = jdbcTemplate.queryForList("select uid,passwd from user");
+        for(Map<String, Object> item:data){
+            System.out.println(item.get("uid").toString()+item.get("passwd"));
+//            jdbcTemplate.update(
+//                    "update user set passwd=? where uid=?",
+//                    UserUtil.encipher((String) item.get("passwd")),
+//                    item.get("uid")
+//            );
+        }
+    }
+    @Test
+    public void test16(){
+        String passwd = "125788";
+        String bcrpasswd = UserUtil.encipher(passwd);
+        log.info(bcrpasswd);
+        Boolean data = UserUtil.checkpasswd(passwd,bcrpasswd);
+        log.info(String.valueOf(data));
+    }
+
 }

@@ -3,10 +3,14 @@ package com.example.nicqbasespring.util;
 import com.example.nicqbasespring.entries.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.config.authentication.PasswordEncoderParser;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpSession;
 import java.lang.module.Configuration;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,10 +40,20 @@ public class UserUtil {
                 return Enum.valueOf(clazz,desc.trim());
 
             }catch (IllegalStateException illegalStateException){
-
+                illegalStateException.printStackTrace();
             }
         }
         return null;
     }
+
+    public static  String encipher(String password){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
+        return encoder.encode(password);
+    }
+    public static Boolean checkpasswd(CharSequence password,String cpassword){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
+        return encoder.matches(password,cpassword);
+    }
+
 }
 

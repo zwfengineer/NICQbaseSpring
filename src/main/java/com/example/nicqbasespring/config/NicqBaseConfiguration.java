@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +27,8 @@ import java.util.logging.Logger;
                 "com.example.nicqbasespring.service",
                 "com.example.nicqbasespring.dao",
                 "com.example.nicqbasespring.controller",
-                "com.example.nicqbasespring.entries"
+                "com.example.nicqbasespring.entries",
+                "com.example.nicqbasespring.handler"
         }
 )
 @Slf4j
@@ -63,5 +66,9 @@ public class NicqBaseConfiguration {
                 return new ObjectMapper();
         }
 
+        @Bean
+        public PasswordEncoder passwordEncoder(){
+                return new BCryptPasswordEncoder(10);
+        }
 
 }

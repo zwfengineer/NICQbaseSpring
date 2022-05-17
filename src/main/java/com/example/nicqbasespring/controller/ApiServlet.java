@@ -76,7 +76,7 @@ public class ApiServlet {
             data.put("Logined",true);
             data.remove("passwd");
             httpSession.setAttribute("Logined",true);
-            httpSession.setAttribute("user",user);
+            httpSession.setAttribute("user", logindata);
             log.info(httpSession.getId());
             log.info(data.toString());
             httpSession.setMaxInactiveInterval(-1);
@@ -199,8 +199,8 @@ public class ApiServlet {
     public Object pullHistoryMessage(HttpSession httpSession){
         if(userService.isOnline(httpSession)){
             Map<String,List<Message>> data = historyMessageService.load(UserUtil.getHttpSessionUser(httpSession).getUID());
-            log.info(String.valueOf(data.size()), objectMapper.valueToTree(data).asText());
-//            return objectMapper.valueToTree(data).asText();
+            ObjectNode objectNode = objectMapper.valueToTree(data);
+            log.info(String.valueOf(data.size()),objectNode.asText());
             return data;
         }
         return null;
@@ -213,5 +213,10 @@ public class ApiServlet {
 
     public Object getHistoryMessageSummary(){
         return  null;
+    }
+
+    @RequestMapping(value = "/getfriendavatar",method = RequestMethod.POST)
+    public Object getfriendavatar(@RequestBody String uid){
+        return userService.getUserAttribute(uid,"avatar");
     }
 }

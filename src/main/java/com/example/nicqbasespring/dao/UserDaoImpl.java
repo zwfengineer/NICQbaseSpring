@@ -14,7 +14,7 @@ public interface UserDaoImpl {
      Object modifyUserLevel(User user);
      Object modifyUserStatus(User user);
      Object modifyUserInfo(User user);
-     Object getUid(String username);
+     String getUid(String username) throws Exception;
      Object addUser(User user);
      Object getAllUserNum();
      Object getUserNum(String username);

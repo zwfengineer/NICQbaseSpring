@@ -1,46 +1,50 @@
 package com.example.nicqbasespring.service;
 
 import com.example.nicqbasespring.controller.WebSocketConnect;
-import com.example.nicqbasespring.dao.MessageDao;
-import com.example.nicqbasespring.dao.UserDao;
-import com.example.nicqbasespring.entries.Message;
+
 import com.example.nicqbasespring.entries.User;
 import com.example.nicqbasespring.util.UserUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeCreator;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.stereotype.Component;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
-import javax.websocket.EncodeException;
-import java.io.IOException;
+
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
+import java.util.*;
+
 
 
 @Service
 @Slf4j
 public  class UserService extends AbstraService {
+    @Autowired
+    PasswordEncoder passwordEncoder;
     public Object LoginServer(@NotNull User user, HttpSession httpSession){
-        user.setUID(String.valueOf( userDao.getUid(user.getUserName())));
-        Integer num = (Integer) userDao.checkUserNum(user);
-        log.info(num.toString());
-        if(num==1) {
-            userDao.Login(user.getUID(), httpSession.getId());
-            return userDao.getUser(user.getUID());
-        }
-        else {
+        try{
+            User datauser= (User) userDao.getUser(userDao.getUid(user.getUserName()));
+            if(passwordEncoder.matches(user.getPasswd(),datauser.getPasswd())){
+                userDao.Login(datauser.getUID(), httpSession.getId());
+                datauser.setPasswd(user.getPasswd());
+                try{
+                    Thread.sleep(100);
+//                    优化点！！！！！
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+                return datauser;
+            }else{
+                log.info("LoginFaild");
+                return "用户名或密码错误";
+            }
+        } catch (EmptyResultDataAccessException e) {
             return "用户名或密码错误，请重新输入";
         }
     }
@@ -48,7 +52,11 @@ public  class UserService extends AbstraService {
         if(((Integer)userDao.getUserNum(user.getUserName()))>=1){return  "Duplicate UserName";}
         String count =String.valueOf((Integer) userDao.getAllUserNum()+1);
         String uid = new SimpleDateFormat("yy-MM-dd").format(new Date()) +"-"+ count;
+        Random random = new Random();
+        String avatar = String.valueOf(random.nextInt(12));
         user.setUID(uid);
+        user.setAvatar(avatar);
+        user.setPasswd(passwordEncoder.encode(user.getPasswd()));
         if ((Integer)userDao.addUser(user)==1){
             userDao.createoutbox(user.getUID());
             userDao.createinbox(user.getUID());
@@ -66,20 +74,16 @@ public  class UserService extends AbstraService {
             switch (obj.getClass().getSimpleName()) {
                 case "Integer":
                     if (((Integer) obj) == 1) {
-                        Object ckfObj = userDao.checkFriend(user.getUID(), fid);
-                        if ("Integer".equals(ckfObj.getClass().getSimpleName())) {
-                            messageDao.cleanaddFriendRequestlist(user.getUID(),fid);
-                            if(isOnline(fid)){
-                                WebSocketConnect.addfriendEvent(fid);
-                            }
-                            if ((Integer) ckfObj != 0) {
-                                return "OK:已经是好友了！";
-                            } else {
-                                userDao.addFriend(user.getUID(), fid);
-                                return "OK:已经添加好友";
-                            }
+                        Integer ckfObj = userDao.checkFriend(user.getUID(), fid);
+                        messageDao.cleanaddFriendRequestlist(user.getUID(),fid);
+                        if(isOnline(fid)){
+                            WebSocketConnect.addfriendEvent(fid);
+                        }
+                        if (ckfObj != 0) {
+                            return "OK:已经是好友了！";
                         } else {
-                            return ckfObj;
+                            userDao.addFriend(user.getUID(), fid);
+                            return "OK:已经添加好友";
                         }
                     } else {
                         return "ERR:没有这个用户！";
@@ -91,7 +95,7 @@ public  class UserService extends AbstraService {
         return "ERR:积极是积极的朋友";
     }
     public Object removeFriend(@NotNull User user, String fid){
-        if ((Integer)userDao.checkFriend(user.getUID(),fid)==1){
+        if (userDao.checkFriend(user.getUID(),fid) ==1){
             userDao.removeFriend(user.getUID(),fid);
             return "OK:已经解除好友";
         }else {
@@ -138,9 +142,17 @@ public  class UserService extends AbstraService {
     }
     public String getUserName(String uid){
         try {
-            return (String) userDao.getUserName(uid);
+            return userDao.getUserName(uid);
         }catch (EmptyResultDataAccessException exception){
             return "NULL";
         }
+    }
+
+    public Object getUserAttribute(String id,String attr){
+        Object object = userDao.getUser(id);
+        if(object.getClass().getSimpleName().equals("User")){
+            return objectMapper.valueToTree(object).get(attr);
+        }
+        return null;
     }
 }

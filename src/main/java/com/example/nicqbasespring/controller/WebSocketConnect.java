@@ -54,7 +54,7 @@ public  class WebSocketConnect {
     }
 
     @OnOpen
-    public void onOpen(@NotNull Session session, EndpointConfig config) throws IOException {
+    public void onOpen(@NotNull Session session, EndpointConfig config) throws IOException, EncodeException {
         if (usercheck(session, config)) {
             this.session = session;
             this.valid = true;
@@ -64,6 +64,14 @@ public  class WebSocketConnect {
             if(! userService.isOnline(user.getUID())){
                 userService.LoginServer(user,httpSession);
             }
+            session.getBasicRemote().sendObject(new Message(
+                    "System",
+                    UserUtil.getHttpSessionUser(httpSession).getUID(),
+                    "useronline",
+                    new Timestamp(System.currentTimeMillis()),
+                    DataType.Directive,
+                    MessageType.ServerPush
+            ));
             log.info("user:" + user.getUserName() + "Connect success" + "UserNums:" + onLineUserList.size());
         }
     }
