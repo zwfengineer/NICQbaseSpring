@@ -11,7 +11,6 @@ import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import javax.websocket.CloseReason;
 import java.io.IOException;
-import java.util.Arrays;
 
 @WebListener
 @Configuration

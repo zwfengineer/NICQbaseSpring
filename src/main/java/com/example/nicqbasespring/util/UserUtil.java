@@ -45,7 +45,6 @@ public class UserUtil {
         }
         return null;
     }
-
     public static  String encipher(String password){
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
         return encoder.encode(password);
@@ -54,6 +53,5 @@ public class UserUtil {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
         return encoder.matches(password,cpassword);
     }
-
 }
 

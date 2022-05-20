@@ -14,20 +14,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpCookie;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
 import javax.websocket.EncodeException;
@@ -161,15 +154,21 @@ public class ApiServlet {
     }
 
     @RequestMapping(value="/getfriendlist",method = RequestMethod.POST)
-    public String getfriendlist(@NotNull HttpSession httpSession) {
+    public Object getfriendlist(@NotNull HttpSession httpSession, Response response) {
         if (userService.isOnline(httpSession)){
             Object dataobject = userService.getFriends((User) httpSession.getAttribute("user"));
             System.out.println(dataobject.getClass().toString());
             if (dataobject.getClass().getSimpleName().equals("ArrayNode")){
                 return dataobject.toString();
+            }else{
+                return new ArrayList<String>();
             }
+        }else{
+//            httpServletRequest.getcont
+            response.setStatus(500);
+            return null;
+
         }
-        return "null";
     }
 
     @RequestMapping(value = "/getAddFriendRequest",method = RequestMethod.POST)
@@ -200,7 +199,7 @@ public class ApiServlet {
         if(userService.isOnline(httpSession)){
             Map<String,List<Message>> data = historyMessageService.load(UserUtil.getHttpSessionUser(httpSession).getUID());
             ObjectNode objectNode = objectMapper.valueToTree(data);
-            log.info(String.valueOf(data.size()),objectNode.asText());
+            log.info(data.size() +objectNode.asText());
             return data;
         }
         return null;

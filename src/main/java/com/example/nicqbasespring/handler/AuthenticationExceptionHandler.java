@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.Result;
 import java.io.IOException;
 
 @Component
@@ -19,8 +18,6 @@ public class AuthenticationExceptionHandler implements AuthenticationEntryPoint 
             AuthenticationException authException
     )
             throws IOException, ServletException {
-
-
 
     }
 }
