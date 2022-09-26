@@ -19,12 +19,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Response;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
+import javax.websocket.Decoder;
 import javax.websocket.EncodeException;
+import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 
@@ -218,4 +226,25 @@ public class ApiServlet {
     public Object getfriendavatar(@RequestBody String uid){
         return userService.getUserAttribute(uid,"avatar");
     }
+
+    @RequestMapping(value="/putfile",method = RequestMethod.POST)
+    public Object putfile(HttpServletRequest httpServletRequest,HttpSession httpSession) throws IOException {
+        String path = "D:\\WebFile\\";
+        MultipartFile file= ((StandardMultipartHttpServletRequest)httpServletRequest).getMultiFileMap().get("file").get(0);
+        String filename = String.valueOf(System.currentTimeMillis());
+        File saveFile = new File(path+filename);
+        if(saveFile.getParentFile().exists()){
+            saveFile.getParentFile().mkdirs();
+        }
+        file.transferTo(saveFile);
+        log.info(filename);
+        Map<String,Object> data = new HashMap();
+        data.put("url", String.format("http://localhost:1524/%s",URLEncoder.encode(filename,StandardCharsets.UTF_8)));
+        Map<String,Object> result = new HashMap<>();
+        result.put("data",data);
+        result.put("errno",0);
+        return result;
+    }
+
+
 }

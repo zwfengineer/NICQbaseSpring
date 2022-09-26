@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,16 +38,22 @@ import java.util.Random;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @Slf4j
 class NicQbaseSpringApplicationTests {
+    @Setter
     @Autowired
     HistoryMessageService historyMessageService;
+    @Setter
     @Autowired
     ApplicationContext context;
+    @Setter
     @Autowired
     UserService userService;
+    @Setter
     @Autowired
     UserDao userDao;
+    @Setter
     @Autowired
     RedisTemplate<String,Object> redisTemplate;
+    @Setter
     @Autowired
     MessageDao messageDao;
 
@@ -80,12 +87,16 @@ class NicQbaseSpringApplicationTests {
     public void test4() {
         User user = (User) userDao.getUser(userDao.getUid("Rider"));
         System.out.println(userService.removeFriend(user, userDao.getUid("李重光")));
-        System.out.println(
-                userService.removeFriend(
-                        user,
-                        userDao.getUid("影")
-                )
-        );
+        try {
+            System.out.println(
+                    userService.removeFriend(
+                            user,
+                            userDao.getUid("影")
+                    )
+            );
+        }catch (EmptyResultDataAccessException emptyResultDataAccessException){
+            log.info("查无此人");
+        }
     }
     @Test
     public void test3() {

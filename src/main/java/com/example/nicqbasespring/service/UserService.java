@@ -49,11 +49,12 @@ public  class UserService extends AbstraService {
         }
     }
     public Object RegisterUser(@NotNull User user) {
-        if(((Integer)userDao.getUserNum(user.getUserName()))>=1){return  "Duplicate UserName";}
+        if(((Integer)userDao.getUserNum(user.getUserName()))>=1)
+        {return  "Duplicate UserName";}
         String count =String.valueOf((Integer) userDao.getAllUserNum()+1);
         String uid = new SimpleDateFormat("yy-MM-dd").format(new Date()) +"-"+ count;
         Random random = new Random();
-        String avatar = String.valueOf(random.nextInt(12));
+        String avatar =  String.valueOf(random.nextInt(12));
         user.setUID(uid);
         user.setAvatar(avatar);
         user.setPasswd(passwordEncoder.encode(user.getPasswd()));
@@ -66,9 +67,6 @@ public  class UserService extends AbstraService {
         }
     }
     public Object addFriends(@NotNull User user, String fid) {
-        /*
-        请确保 user 真实有效
-        */
         Object obj = userDao.checkUserNum(fid);
         if(! user.getUID().equals(fid)) {
             switch (obj.getClass().getSimpleName()) {

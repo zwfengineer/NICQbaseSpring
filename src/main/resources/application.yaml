@@ -6,9 +6,9 @@ server:
         same-site: none
   ssl:
     protocol: TLS
-    key-store: classpath:keystore.p12
+    key-store: classpath:192.168.10.1.p12
     key-store-type: JKS
-    key-store-password: zwf123
+    key-store-password: changeit
 #  shutdown: graceful
 spring:
   redis:
@@ -22,6 +22,10 @@ spring:
         max-wait: 1
         max-idle: 5
         min-idle: 11
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
 springdoc:
   packages-to-scan: com.example.nicqbasespring.controller
 logging:

@@ -4,7 +4,6 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +13,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.PreDestroy;
 import javax.sql.DataSource;
-import java.util.logging.Logger;
 
 
 @Configuration
@@ -52,7 +47,6 @@ public class NicqBaseConfiguration {
                 jdbcTemplate.setDataSource(dataSource);
                 return jdbcTemplate;
         }
-
         @Bean(name="DataSourceTransactionManager")
         @Autowired(required = false)
         public DataSourceTransactionManager getDatasourceTransactionManager(DataSource datasource){
@@ -60,7 +54,6 @@ public class NicqBaseConfiguration {
                 dataSourceTransactionManager.setDataSource(datasource);
                 return dataSourceTransactionManager;
         }
-
         @Bean
         public ObjectMapper getObjectMapper(){
                 return new ObjectMapper();

@@ -21,7 +21,7 @@ public class NicqWebConfiguration {
             public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry.addMapping("/**")
 //                        .allowedOriginPatterns("*")
-                        .allowedOrigins("http://localhost:1938")
+                        .allowedOrigins("http://localhost:2000")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true);
